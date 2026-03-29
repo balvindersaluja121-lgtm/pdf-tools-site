@@ -1,4 +1,4 @@
-// Mock data for iLovePDF clone
+// Mock data for Easy Scan PDF clone
 
 export const pdfTools = [
   {

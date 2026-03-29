@@ -1,6 +1,5 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Heart } from 'lucide-react';
 
 const Footer = () => {
   return (
@@ -10,9 +9,7 @@ const Footer = () => {
           {/* Brand */}
           <div>
             <Link to="/" className="flex items-center space-x-2 text-2xl font-bold mb-4">
-              <span className="text-white">I</span>
-              <Heart className="h-6 w-6 fill-red-600 text-red-600" />
-              <span className="text-white">PDF</span>
+              <span className="text-white">Easy Scan PDF</span>
             </Link>
             <p className="text-sm">
               Every tool you need to work with PDFs in one place. Free and easy to use.
@@ -56,7 +53,7 @@ const Footer = () => {
         </div>
 
         <div className="border-t border-gray-800 mt-8 pt-8 text-sm text-center">
-          <p>&copy; {new Date().getFullYear()} iLovePDF. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} Easy Scan PDF. All rights reserved.</p>
         </div>
       </div>
     </footer>

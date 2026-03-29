@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Heart } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -37,7 +36,7 @@ const Signup = () => {
     // Mock signup
     toast({
       title: 'Account Created',
-      description: 'Welcome to iLovePDF!',
+      description: 'Welcome to Easy Scan PDF!',
     });
     setTimeout(() => navigate('/'), 1000);
   };
@@ -47,9 +46,7 @@ const Signup = () => {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <Link to="/" className="flex items-center justify-center space-x-2 text-3xl font-bold mb-4">
-            <span className="text-gray-900">I</span>
-            <Heart className="h-8 w-8 fill-red-600 text-red-600" />
-            <span className="text-gray-900">PDF</span>
+            <span className="text-gray-900">Easy Scan PDF</span>
           </Link>
           <CardTitle className="text-2xl">Create your account</CardTitle>
           <CardDescription>Get started with your free account</CardDescription>

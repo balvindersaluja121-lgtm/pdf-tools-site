@@ -131,7 +131,7 @@ const Pricing = () => {
           <h2 className="text-3xl font-bold text-center mb-12">Frequently Asked Questions</h2>
           <div className="space-y-6">
             <div>
-              <h3 className="text-lg font-bold mb-2">Can I use iLovePDF for free?</h3>
+              <h3 className="text-lg font-bold mb-2">Can I use Easy Scan PDF for free?</h3>
               <p className="text-gray-600">
                 Yes! Our free plan includes access to all basic PDF tools with some limitations on file size and processing volume.
               </p>

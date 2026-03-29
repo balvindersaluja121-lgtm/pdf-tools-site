@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Heart, ChevronDown, Menu, X } from 'lucide-react';
+import { ChevronDown, Menu, X } from 'lucide-react';
 import { Button } from './ui/button';
 import {
   DropdownMenu,
@@ -24,9 +24,7 @@ const Header = () => {
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2 text-2xl font-bold">
-            <span className="text-gray-900">I</span>
-            <Heart className="h-6 w-6 fill-red-600 text-red-600" />
-            <span className="text-gray-900">PDF</span>
+            <span className="text-gray-900">Easy Scan PDF</span>
           </Link>
 
           {/* Desktop Navigation */}
