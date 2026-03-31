@@ -3,9 +3,13 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { pdfTools } from '../data/mockData';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
-import { Upload, Download, ArrowLeft, FileText, CheckCircle2 } from 'lucide-react';
+import { Upload, Download, ArrowLeft, FileText, CheckCircle2, AlertCircle } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
 import { Progress } from '../components/ui/progress';
+import axios from 'axios';
+
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const API = `${BACKEND_URL}/api`;
 
 const ToolPage = () => {
   const { toolId } = useParams();
@@ -16,8 +20,22 @@ const ToolPage = () => {
   const [processing, setProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [completed, setCompleted] = useState(false);
+  const [downloadUrl, setDownloadUrl] = useState(null);
+  const [error, setError] = useState(null);
 
   const tool = pdfTools.find(t => t.route === `/${toolId}`);
+
+  // Map tool IDs to backend endpoints and file requirements
+  const toolConfig = {
+    'merge-pdf': { endpoint: '/pdf/merge', multiple: true, accept: '.pdf', implemented: true },
+    'split-pdf': { endpoint: '/pdf/split', multiple: false, accept: '.pdf', implemented: true },
+    'compress-pdf': { endpoint: '/pdf/compress', multiple: false, accept: '.pdf', implemented: true },
+    'pdf-to-word': { endpoint: '/pdf/pdf-to-word', multiple: false, accept: '.pdf', implemented: true },
+    'word-to-pdf': { endpoint: '/pdf/word-to-pdf', multiple: false, accept: '.docx', implemented: true },
+  };
+
+  const config = toolConfig[toolId];
+  const isImplemented = config?.implemented || false;
 
   if (!tool) {
     return (
@@ -40,9 +58,11 @@ const ToolPage = () => {
     setFiles(selectedFiles);
     setCompleted(false);
     setProgress(0);
+    setError(null);
+    setDownloadUrl(null);
   };
 
-  const handleProcess = () => {
+  const handleProcess = async () => {
     if (files.length === 0) {
       toast({
         title: 'No files selected',
@@ -52,32 +72,97 @@ const ToolPage = () => {
       return;
     }
 
+    // Check if tool is implemented
+    if (!isImplemented) {
+      toast({
+        title: 'Coming Soon',
+        description: 'This tool is currently under development',
+        variant: 'destructive'
+      });
+      return;
+    }
+
     setProcessing(true);
     setProgress(0);
+    setError(null);
 
-    // Simulate processing
-    const interval = setInterval(() => {
-      setProgress(prev => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          setProcessing(false);
-          setCompleted(true);
-          toast({
-            title: 'Processing complete!',
-            description: 'Your file is ready to download',
-          });
-          return 100;
+    try {
+      const formData = new FormData();
+      
+      if (config.multiple) {
+        files.forEach(file => formData.append('files', file));
+      } else {
+        formData.append('file', files[0]);
+      }
+
+      // Simulate progress
+      const progressInterval = setInterval(() => {
+        setProgress(prev => {
+          if (prev >= 90) {
+            clearInterval(progressInterval);
+            return 90;
+          }
+          return prev + 10;
+        });
+      }, 200);
+
+      const response = await axios.post(`${API}${config.endpoint}`, formData, {
+        responseType: 'blob',
+        headers: {
+          'Content-Type': 'multipart/form-data'
         }
-        return prev + 10;
       });
-    }, 300);
+
+      clearInterval(progressInterval);
+      setProgress(100);
+
+      // Create download URL
+      const blob = new Blob([response.data]);
+      const url = window.URL.createObjectURL(blob);
+      setDownloadUrl(url);
+
+      setProcessing(false);
+      setCompleted(true);
+
+      toast({
+        title: 'Processing complete!',
+        description: 'Your file is ready to download',
+      });
+    } catch (err) {
+      setProcessing(false);
+      setError(err.response?.data?.detail || err.message || 'Processing failed');
+      toast({
+        title: 'Processing failed',
+        description: err.response?.data?.detail || 'An error occurred during processing',
+        variant: 'destructive'
+      });
+    }
   };
 
   const handleDownload = () => {
-    toast({
-      title: 'Download started',
-      description: 'This is a demo - no actual file is being downloaded',
-    });
+    if (downloadUrl) {
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      
+      // Determine file extension based on tool
+      let filename = 'processed';
+      if (toolId === 'split-pdf') {
+        filename = 'split_pages.zip';
+      } else if (toolId === 'pdf-to-word') {
+        filename = files[0].name.replace('.pdf', '.docx');
+      } else if (toolId === 'word-to-pdf') {
+        filename = files[0].name.replace('.docx', '.pdf');
+      } else if (toolId === 'compress-pdf') {
+        filename = 'compressed.pdf';
+      } else if (toolId === 'merge-pdf') {
+        filename = 'merged.pdf';
+      }
+      
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
   };
 
   return (
@@ -103,6 +188,12 @@ const ToolPage = () => {
             <div>
               <h1 className="text-4xl font-bold text-gray-900 mb-2">{tool.name}</h1>
               <p className="text-lg text-gray-600">{tool.description}</p>
+              {!isImplemented && (
+                <div className="mt-3 inline-flex items-center gap-2 px-3 py-1 bg-yellow-100 text-yellow-800 rounded-md text-sm">
+                  <AlertCircle className="h-4 w-4" />
+                  Coming Soon - Under Development
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -119,7 +210,9 @@ const ToolPage = () => {
                   onClick={() => fileInputRef.current?.click()}
                 >
                   <Upload className="h-16 w-16 mx-auto text-gray-400 mb-4" />
-                  <h3 className="text-xl font-semibold mb-2">Select PDF files</h3>
+                  <h3 className="text-xl font-semibold mb-2">
+                    Select {config?.multiple ? 'PDF files' : config?.accept === '.docx' ? 'Word file' : 'PDF file'}
+                  </h3>
                   <p className="text-gray-600 mb-4">
                     or drop files here
                   </p>
@@ -129,8 +222,8 @@ const ToolPage = () => {
                   <input
                     ref={fileInputRef}
                     type="file"
-                    multiple
-                    accept=".pdf"
+                    multiple={config?.multiple}
+                    accept={config?.accept || '.pdf'}
                     className="hidden"
                     onChange={handleFileSelect}
                   />
@@ -161,12 +254,22 @@ const ToolPage = () => {
                       </div>
                     )}
 
+                    {error && (
+                      <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
+                        <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-red-900 mb-1">Processing Failed</h4>
+                          <p className="text-sm text-red-700">{error}</p>
+                        </div>
+                      </div>
+                    )}
+
                     <Button
                       className="w-full bg-red-600 hover:bg-red-700 text-white"
                       onClick={handleProcess}
-                      disabled={processing}
+                      disabled={processing || !isImplemented}
                     >
-                      {processing ? 'Processing...' : `Process ${tool.name}`}
+                      {processing ? 'Processing...' : `Process with ${tool.name}`}
                     </Button>
                   </div>
                 )}
@@ -194,6 +297,8 @@ const ToolPage = () => {
                       setFiles([]);
                       setCompleted(false);
                       setProgress(0);
+                      setDownloadUrl(null);
+                      setError(null);
                     }}
                   >
                     Process another file
@@ -222,14 +327,14 @@ const ToolPage = () => {
                 <span className="text-2xl">🔒</span>
               </div>
               <h3 className="font-semibold mb-2">Secure & Private</h3>
-              <p className="text-sm text-gray-600">Files deleted after processing</p>
+              <p className="text-sm text-gray-600">Files processed securely</p>
             </div>
             <div className="text-center">
               <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-3">
                 <span className="text-2xl">⚡</span>
               </div>
-              <h3 className="font-semibold mb-2">100% Free</h3>
-              <p className="text-sm text-gray-600">No registration required</p>
+              <h3 className="font-semibold mb-2">High Quality</h3>
+              <p className="text-sm text-gray-600">Professional results guaranteed</p>
             </div>
           </div>
         </div>
