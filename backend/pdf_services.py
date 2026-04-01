@@ -1,11 +1,11 @@
 """
 PDF Processing Services for Easy Scan PDF
-Implements core PDF operations: Merge, Split, Compress, PDF to Word, Word to PDF
+Implements core PDF operations: Merge, Split, Compress, PDF to Word, Word to PDF, and more
 """
 
 import os
 import io
-from typing import List
+from typing import List, Tuple
 from PyPDF2 import PdfReader, PdfWriter, PdfMerger
 from pdf2docx import Converter
 from docx import Document
@@ -15,6 +15,7 @@ from reportlab.lib.utils import ImageReader
 from PIL import Image
 import tempfile
 import logging
+from pdf2image import convert_from_bytes
 
 logger = logging.getLogger(__name__)
 
@@ -216,6 +217,245 @@ class PDFService:
         except Exception as e:
             logger.error(f"Error converting Word to PDF: {str(e)}")
             raise Exception(f"Failed to convert Word to PDF: {str(e)}")
+
+    @staticmethod
+    def pdf_to_jpg(pdf_file: bytes) -> List[bytes]:
+        """
+        Convert PDF pages to JPG images
+        Args:
+            pdf_file: PDF file content as bytes
+        Returns:
+            List of JPG images as bytes
+        """
+        try:
+            # Convert PDF to images
+            images = convert_from_bytes(pdf_file, fmt='jpeg', dpi=200)
+            
+            jpg_images = []
+            for image in images:
+                # Convert PIL Image to bytes
+                img_byte_arr = io.BytesIO()
+                image.save(img_byte_arr, format='JPEG', quality=95)
+                img_byte_arr.seek(0)
+                jpg_images.append(img_byte_arr.getvalue())
+            
+            return jpg_images
+        except Exception as e:
+            logger.error(f"Error converting PDF to JPG: {str(e)}")
+            raise Exception(f"Failed to convert PDF to JPG: {str(e)}")
+
+    @staticmethod
+    def jpg_to_pdf(jpg_files: List[bytes]) -> bytes:
+        """
+        Convert JPG images to PDF
+        Args:
+            jpg_files: List of JPG file contents as bytes
+        Returns:
+            PDF file as bytes
+        """
+        try:
+            output = io.BytesIO()
+            pdf_canvas = canvas.Canvas(output, pagesize=letter)
+            width, height = letter
+            
+            for jpg_bytes in jpg_files:
+                # Open image
+                img = Image.open(io.BytesIO(jpg_bytes))
+                
+                # Calculate dimensions to fit page
+                img_width, img_height = img.size
+                aspect = img_height / img_width
+                
+                if aspect > (height / width):
+                    # Height is limiting factor
+                    new_height = height - 40
+                    new_width = new_height / aspect
+                else:
+                    # Width is limiting factor
+                    new_width = width - 40
+                    new_height = new_width * aspect
+                
+                # Center image on page
+                x = (width - new_width) / 2
+                y = (height - new_height) / 2
+                
+                # Draw image
+                img_reader = ImageReader(io.BytesIO(jpg_bytes))
+                pdf_canvas.drawImage(img_reader, x, y, new_width, new_height)
+                pdf_canvas.showPage()
+            
+            pdf_canvas.save()
+            output.seek(0)
+            
+            return output.getvalue()
+        except Exception as e:
+            logger.error(f"Error converting JPG to PDF: {str(e)}")
+            raise Exception(f"Failed to convert JPG to PDF: {str(e)}")
+
+    @staticmethod
+    def jpg_to_word(jpg_files: List[bytes]) -> bytes:
+        """
+        Convert JPG images to Word document
+        Args:
+            jpg_files: List of JPG file contents as bytes
+        Returns:
+            DOCX file as bytes
+        """
+        try:
+            doc = Document()
+            
+            for jpg_bytes in jpg_files:
+                # Save image temporarily
+                with tempfile.NamedTemporaryFile(delete=False, suffix='.jpg') as temp_img:
+                    temp_img.write(jpg_bytes)
+                    temp_img_path = temp_img.name
+                
+                # Add image to document
+                doc.add_picture(temp_img_path, width=doc.sections[0].page_width - doc.sections[0].left_margin - doc.sections[0].right_margin)
+                doc.add_paragraph()  # Add space between images
+                
+                # Cleanup temp file
+                os.unlink(temp_img_path)
+            
+            # Save document to bytes
+            output = io.BytesIO()
+            doc.save(output)
+            output.seek(0)
+            
+            return output.getvalue()
+        except Exception as e:
+            logger.error(f"Error converting JPG to Word: {str(e)}")
+            raise Exception(f"Failed to convert JPG to Word: {str(e)}")
+
+    @staticmethod
+    def word_to_jpg(docx_file: bytes) -> List[bytes]:
+        """
+        Convert Word document to JPG images
+        First converts to PDF, then PDF to JPG
+        Args:
+            docx_file: DOCX file content as bytes
+        Returns:
+            List of JPG images as bytes
+        """
+        try:
+            # First convert Word to PDF
+            pdf_bytes = PDFService.word_to_pdf(docx_file)
+            
+            # Then convert PDF to JPG
+            jpg_images = PDFService.pdf_to_jpg(pdf_bytes)
+            
+            return jpg_images
+        except Exception as e:
+            logger.error(f"Error converting Word to JPG: {str(e)}")
+            raise Exception(f"Failed to convert Word to JPG: {str(e)}")
+
+    @staticmethod
+    def unlock_pdf(pdf_file: bytes, password: str = "") -> bytes:
+        """
+        Remove password protection from PDF
+        Args:
+            pdf_file: PDF file content as bytes
+            password: Password to unlock the PDF (if needed)
+        Returns:
+            Unlocked PDF as bytes
+        """
+        try:
+            pdf_stream = io.BytesIO(pdf_file)
+            reader = PdfReader(pdf_stream)
+            
+            # Try to decrypt if encrypted
+            if reader.is_encrypted:
+                if password:
+                    reader.decrypt(password)
+                else:
+                    # Try empty password
+                    reader.decrypt("")
+            
+            # Create new PDF without encryption
+            writer = PdfWriter()
+            for page in reader.pages:
+                writer.add_page(page)
+            
+            output = io.BytesIO()
+            writer.write(output)
+            output.seek(0)
+            
+            return output.getvalue()
+        except Exception as e:
+            logger.error(f"Error unlocking PDF: {str(e)}")
+            raise Exception(f"Failed to unlock PDF. Make sure you provided the correct password: {str(e)}")
+
+    @staticmethod
+    def protect_pdf(pdf_file: bytes, password: str) -> bytes:
+        """
+        Add password protection to PDF
+        Args:
+            pdf_file: PDF file content as bytes
+            password: Password to protect the PDF
+        Returns:
+            Protected PDF as bytes
+        """
+        try:
+            pdf_stream = io.BytesIO(pdf_file)
+            reader = PdfReader(pdf_stream)
+            writer = PdfWriter()
+            
+            # Add all pages
+            for page in reader.pages:
+                writer.add_page(page)
+            
+            # Encrypt with password
+            writer.encrypt(user_password=password, owner_password=password, algorithm="AES-256")
+            
+            output = io.BytesIO()
+            writer.write(output)
+            output.seek(0)
+            
+            return output.getvalue()
+        except Exception as e:
+            logger.error(f"Error protecting PDF: {str(e)}")
+            raise Exception(f"Failed to protect PDF: {str(e)}")
+
+    @staticmethod
+    def organize_pdf(pdf_file: bytes, page_order: List[int]) -> bytes:
+        """
+        Reorganize PDF pages in custom order
+        Args:
+            pdf_file: PDF file content as bytes
+            page_order: List of page numbers in desired order (1-indexed)
+        Returns:
+            Reorganized PDF as bytes
+        """
+        try:
+            pdf_stream = io.BytesIO(pdf_file)
+            reader = PdfReader(pdf_stream)
+            writer = PdfWriter()
+            
+            total_pages = len(reader.pages)
+            
+            # If no order specified, use original order
+            if not page_order:
+                page_order = list(range(1, total_pages + 1))
+            
+            # Add pages in specified order
+            for page_num in page_order:
+                # Convert to 0-indexed
+                page_index = page_num - 1
+                
+                if 0 <= page_index < total_pages:
+                    writer.add_page(reader.pages[page_index])
+                else:
+                    logger.warning(f"Page {page_num} out of range, skipping")
+            
+            output = io.BytesIO()
+            writer.write(output)
+            output.seek(0)
+            
+            return output.getvalue()
+        except Exception as e:
+            logger.error(f"Error organizing PDF: {str(e)}")
+            raise Exception(f"Failed to organize PDF: {str(e)}")
+
 
 
 # Initialize service

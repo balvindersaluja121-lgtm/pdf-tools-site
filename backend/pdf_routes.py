@@ -159,6 +159,255 @@ async def pdf_to_word(file: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail=f"Failed to convert PDF to Word: {str(e)}")
 
 
+@pdf_router.post("/pdf-to-jpg")
+async def pdf_to_jpg(file: UploadFile = File(...)):
+    """
+    Convert PDF to JPG images
+    Returns a ZIP file containing all images
+    """
+    try:
+        if not file.filename.endswith('.pdf'):
+            raise HTTPException(status_code=400, detail="File must be a PDF")
+        
+        content = await file.read()
+        
+        # Convert PDF to JPG
+        jpg_images = pdf_service.pdf_to_jpg(content)
+        
+        # Create ZIP file
+        import zipfile
+        import io
+        
+        zip_buffer = io.BytesIO()
+        with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+            for i, jpg_bytes in enumerate(jpg_images, 1):
+                zip_file.writestr(f"page_{i}.jpg", jpg_bytes)
+        
+        zip_buffer.seek(0)
+        
+        return Response(
+            content=zip_buffer.getvalue(),
+            media_type="application/zip",
+            headers={
+                "Content-Disposition": "attachment; filename=pdf_images.zip"
+            }
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in pdf_to_jpg: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to convert PDF to JPG: {str(e)}")
+
+
+@pdf_router.post("/jpg-to-pdf")
+async def jpg_to_pdf(files: List[UploadFile] = File(...)):
+    """
+    Convert JPG images to PDF
+    """
+    try:
+        if len(files) < 1:
+            raise HTTPException(status_code=400, detail="At least 1 JPG file required")
+        
+        # Read all JPG files
+        jpg_contents = []
+        for file in files:
+            if not file.filename.lower().endswith(('.jpg', '.jpeg')):
+                raise HTTPException(status_code=400, detail=f"File {file.filename} is not a JPG")
+            
+            content = await file.read()
+            jpg_contents.append(content)
+        
+        # Convert to PDF
+        pdf_content = pdf_service.jpg_to_pdf(jpg_contents)
+        
+        return Response(
+            content=pdf_content,
+            media_type="application/pdf",
+            headers={
+                "Content-Disposition": "attachment; filename=converted.pdf"
+            }
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in jpg_to_pdf: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to convert JPG to PDF: {str(e)}")
+
+
+@pdf_router.post("/jpg-to-word")
+async def jpg_to_word(files: List[UploadFile] = File(...)):
+    """
+    Convert JPG images to Word document
+    """
+    try:
+        if len(files) < 1:
+            raise HTTPException(status_code=400, detail="At least 1 JPG file required")
+        
+        # Read all JPG files
+        jpg_contents = []
+        for file in files:
+            if not file.filename.lower().endswith(('.jpg', '.jpeg')):
+                raise HTTPException(status_code=400, detail=f"File {file.filename} is not a JPG")
+            
+            content = await file.read()
+            jpg_contents.append(content)
+        
+        # Convert to Word
+        docx_content = pdf_service.jpg_to_word(jpg_contents)
+        
+        return Response(
+            content=docx_content,
+            media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            headers={
+                "Content-Disposition": "attachment; filename=converted.docx"
+            }
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in jpg_to_word: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to convert JPG to Word: {str(e)}")
+
+
+@pdf_router.post("/word-to-jpg")
+async def word_to_jpg(file: UploadFile = File(...)):
+    """
+    Convert Word document to JPG images
+    Returns a ZIP file containing all images
+    """
+    try:
+        if not file.filename.endswith('.docx'):
+            raise HTTPException(status_code=400, detail="File must be a DOCX file")
+        
+        content = await file.read()
+        
+        # Convert to JPG
+        jpg_images = pdf_service.word_to_jpg(content)
+        
+        # Create ZIP file
+        import zipfile
+        import io
+        
+        zip_buffer = io.BytesIO()
+        with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+            for i, jpg_bytes in enumerate(jpg_images, 1):
+                zip_file.writestr(f"page_{i}.jpg", jpg_bytes)
+        
+        zip_buffer.seek(0)
+        
+        return Response(
+            content=zip_buffer.getvalue(),
+            media_type="application/zip",
+            headers={
+                "Content-Disposition": "attachment; filename=word_images.zip"
+            }
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in word_to_jpg: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to convert Word to JPG: {str(e)}")
+
+
+@pdf_router.post("/unlock-pdf")
+async def unlock_pdf(file: UploadFile = File(...), password: str = ""):
+    """
+    Remove password protection from PDF
+    """
+    try:
+        if not file.filename.endswith('.pdf'):
+            raise HTTPException(status_code=400, detail="File must be a PDF")
+        
+        content = await file.read()
+        
+        # Unlock PDF
+        unlocked_pdf = pdf_service.unlock_pdf(content, password)
+        
+        return Response(
+            content=unlocked_pdf,
+            media_type="application/pdf",
+            headers={
+                "Content-Disposition": "attachment; filename=unlocked.pdf"
+            }
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in unlock_pdf: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to unlock PDF: {str(e)}")
+
+
+@pdf_router.post("/protect-pdf")
+async def protect_pdf(file: UploadFile = File(...), password: str = ""):
+    """
+    Add password protection to PDF
+    """
+    try:
+        if not file.filename.endswith('.pdf'):
+            raise HTTPException(status_code=400, detail="File must be a PDF")
+        
+        if not password:
+            raise HTTPException(status_code=400, detail="Password is required")
+        
+        content = await file.read()
+        
+        # Protect PDF
+        protected_pdf = pdf_service.protect_pdf(content, password)
+        
+        return Response(
+            content=protected_pdf,
+            media_type="application/pdf",
+            headers={
+                "Content-Disposition": "attachment; filename=protected.pdf"
+            }
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in protect_pdf: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to protect PDF: {str(e)}")
+
+
+@pdf_router.post("/organize-pdf")
+async def organize_pdf(file: UploadFile = File(...)):
+    """
+    Reorganize PDF pages
+    For now, reverses the page order as a demo
+    """
+    try:
+        if not file.filename.endswith('.pdf'):
+            raise HTTPException(status_code=400, detail="File must be a PDF")
+        
+        content = await file.read()
+        
+        # Get page count
+        import io as io_module
+        from PyPDF2 import PdfReader
+        reader = PdfReader(io_module.BytesIO(content))
+        total_pages = len(reader.pages)
+        
+        # Reverse order for demo (you can customize this)
+        page_order = list(range(total_pages, 0, -1))
+        
+        # Organize PDF
+        organized_pdf = pdf_service.organize_pdf(content, page_order)
+        
+        return Response(
+            content=organized_pdf,
+            media_type="application/pdf",
+            headers={
+                "Content-Disposition": "attachment; filename=organized.pdf",
+                "X-Page-Order": "reversed"
+            }
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in organize_pdf: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to organize PDF: {str(e)}")
+
+
+
 @pdf_router.post("/word-to-pdf")
 async def word_to_pdf(file: UploadFile = File(...)):
     """
@@ -201,6 +450,13 @@ async def health_check():
             "split": "available",
             "compress": "available",
             "pdf_to_word": "available",
-            "word_to_pdf": "available"
+            "word_to_pdf": "available",
+            "pdf_to_jpg": "available",
+            "jpg_to_pdf": "available",
+            "jpg_to_word": "available",
+            "word_to_jpg": "available",
+            "unlock_pdf": "available",
+            "protect_pdf": "available",
+            "organize_pdf": "available"
         }
     }

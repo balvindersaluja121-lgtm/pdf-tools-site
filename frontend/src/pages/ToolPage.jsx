@@ -32,6 +32,13 @@ const ToolPage = () => {
     'compress-pdf': { endpoint: '/pdf/compress', multiple: false, accept: '.pdf', implemented: true },
     'pdf-to-word': { endpoint: '/pdf/pdf-to-word', multiple: false, accept: '.pdf', implemented: true },
     'word-to-pdf': { endpoint: '/pdf/word-to-pdf', multiple: false, accept: '.docx', implemented: true },
+    'pdf-to-jpg': { endpoint: '/pdf/pdf-to-jpg', multiple: false, accept: '.pdf', implemented: true },
+    'jpg-to-pdf': { endpoint: '/pdf/jpg-to-pdf', multiple: true, accept: '.jpg,.jpeg', implemented: true },
+    'jpg-to-word': { endpoint: '/pdf/jpg-to-word', multiple: true, accept: '.jpg,.jpeg', implemented: true },
+    'word-to-jpg': { endpoint: '/pdf/word-to-jpg', multiple: false, accept: '.docx', implemented: true },
+    'unlock-pdf': { endpoint: '/pdf/unlock-pdf', multiple: false, accept: '.pdf', implemented: true },
+    'protect-pdf': { endpoint: '/pdf/protect-pdf', multiple: false, accept: '.pdf', implemented: true },
+    'organize-pdf': { endpoint: '/pdf/organize-pdf', multiple: false, accept: '.pdf', implemented: true },
   };
 
   const config = toolConfig[toolId];
@@ -146,16 +153,22 @@ const ToolPage = () => {
       
       // Determine file extension based on tool
       let filename = 'processed';
-      if (toolId === 'split-pdf') {
-        filename = 'split_pages.zip';
-      } else if (toolId === 'pdf-to-word') {
-        filename = files[0].name.replace('.pdf', '.docx');
-      } else if (toolId === 'word-to-pdf') {
-        filename = files[0].name.replace('.docx', '.pdf');
+      if (toolId === 'split-pdf' || toolId === 'pdf-to-jpg' || toolId === 'word-to-jpg' || toolId === 'jpg-to-word') {
+        filename = `${toolId}_output.zip`;
+      } else if (toolId === 'pdf-to-word' || toolId === 'jpg-to-word') {
+        filename = files[0].name.replace(/\.(pdf|jpg|jpeg)$/i, '.docx');
+      } else if (toolId === 'word-to-pdf' || toolId === 'jpg-to-pdf') {
+        filename = files[0].name.replace(/\.(docx|jpg|jpeg)$/i, '.pdf');
       } else if (toolId === 'compress-pdf') {
         filename = 'compressed.pdf';
       } else if (toolId === 'merge-pdf') {
         filename = 'merged.pdf';
+      } else if (toolId === 'unlock-pdf') {
+        filename = 'unlocked.pdf';
+      } else if (toolId === 'protect-pdf') {
+        filename = 'protected.pdf';
+      } else if (toolId === 'organize-pdf') {
+        filename = 'organized.pdf';
       }
       
       link.download = filename;
@@ -211,7 +224,9 @@ const ToolPage = () => {
                 >
                   <Upload className="h-16 w-16 mx-auto text-gray-400 mb-4" />
                   <h3 className="text-xl font-semibold mb-2">
-                    Select {config?.multiple ? 'PDF files' : config?.accept === '.docx' ? 'Word file' : 'PDF file'}
+                    Select {config?.accept === '.docx' ? 'Word file' : 
+                           config?.accept?.includes('.jpg') ? 'image files' : 
+                           'PDF file'}{config?.multiple ? 's' : ''}
                   </h3>
                   <p className="text-gray-600 mb-4">
                     or drop files here
