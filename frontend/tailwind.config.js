@@ -52,6 +52,14 @@ module.exports = {
   				'3': 'hsl(var(--chart-3))',
   				'4': 'hsl(var(--chart-4))',
   				'5': 'hsl(var(--chart-5))'
+  			},
+  			brand: {
+  				orange: '#F97316',
+  				'orange-dark': '#EA580C',
+  				'orange-light': '#FB923C',
+  				navy: '#1E293B',
+  				'navy-light': '#334155',
+  				'navy-dark': '#0F172A'
   			}
   		},
   		keyframes: {

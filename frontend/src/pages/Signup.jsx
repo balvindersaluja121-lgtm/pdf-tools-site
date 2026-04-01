@@ -105,12 +105,12 @@ const Signup = () => {
               <input type="checkbox" required className="mt-1 rounded" />
               <label className="text-sm text-gray-600">
                 I agree to the{' '}
-                <Link to="/" className="text-red-600 hover:underline">Terms of Service</Link>
+                <Link to="/" className="text-brand-orange hover:underline">Terms of Service</Link>
                 {' '}and{' '}
-                <Link to="/" className="text-red-600 hover:underline">Privacy Policy</Link>
+                <Link to="/" className="text-brand-orange hover:underline">Privacy Policy</Link>
               </label>
             </div>
-            <Button type="submit" className="w-full bg-red-600 hover:bg-red-700 text-white">
+            <Button type="submit" className="w-full bg-brand-orange hover:bg-brand-orange-dark text-white">
               Create account
             </Button>
           </form>
@@ -150,7 +150,7 @@ const Signup = () => {
 
           <p className="mt-6 text-center text-sm text-gray-600">
             Already have an account?{' '}
-            <Link to="/login" className="text-red-600 hover:underline font-medium">
+            <Link to="/login" className="text-brand-orange hover:underline font-medium">
               Log in
             </Link>
           </p>

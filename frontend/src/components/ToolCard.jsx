@@ -62,27 +62,27 @@ const ToolCard = ({ tool }) => {
 
   return (
     <Card
-      className="cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-1 border border-gray-200"
+      className="cursor-pointer transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 border-2 border-gray-200 hover:border-brand-orange bg-white group"
       onClick={() => navigate(tool.route)}
     >
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div
-            className="p-3 rounded-lg mb-3"
+            className="p-4 rounded-xl mb-3 transition-all duration-300 group-hover:scale-110"
             style={{ backgroundColor: `${tool.color}15` }}
           >
-            <IconComponent className="h-8 w-8" style={{ color: tool.color }} />
+            <IconComponent className="h-9 w-9 transition-colors" style={{ color: tool.color }} />
           </div>
           {tool.isNew && (
-            <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-200">
+            <Badge className="bg-brand-orange text-white hover:bg-brand-orange-dark font-semibold shadow-md">
               New!
             </Badge>
           )}
         </div>
-        <CardTitle className="text-lg">{tool.name}</CardTitle>
+        <CardTitle className="text-lg font-bold text-brand-navy group-hover:text-brand-orange transition-colors">{tool.name}</CardTitle>
       </CardHeader>
       <CardContent>
-        <CardDescription className="text-sm leading-relaxed">
+        <CardDescription className="text-sm leading-relaxed text-gray-600">
           {tool.description}
         </CardDescription>
       </CardContent>

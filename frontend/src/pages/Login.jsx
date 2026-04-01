@@ -61,11 +61,11 @@ const Login = () => {
                 <input type="checkbox" className="rounded" />
                 <span>Remember me</span>
               </label>
-              <Link to="/" className="text-sm text-red-600 hover:underline">
+              <Link to="/" className="text-sm text-brand-orange hover:underline">
                 Forgot password?
               </Link>
             </div>
-            <Button type="submit" className="w-full bg-red-600 hover:bg-red-700 text-white">
+            <Button type="submit" className="w-full bg-brand-orange hover:bg-brand-orange-dark text-white">
               Log in
             </Button>
           </form>
@@ -105,7 +105,7 @@ const Login = () => {
 
           <p className="mt-6 text-center text-sm text-gray-600">
             Don't have an account?{' '}
-            <Link to="/signup" className="text-red-600 hover:underline font-medium">
+            <Link to="/signup" className="text-brand-orange hover:underline font-medium">
               Sign up
             </Link>
           </p>

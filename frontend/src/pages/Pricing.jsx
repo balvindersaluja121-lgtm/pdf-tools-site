@@ -43,7 +43,7 @@ const Pricing = () => {
               onClick={() => setBillingCycle('annual')}
             >
               Annual
-              <Badge className="ml-2 bg-red-600 text-white hover:bg-red-700 text-xs">Save 42%</Badge>
+              <Badge className="ml-2 bg-brand-orange text-white hover:bg-brand-orange-dark text-xs">Save 42%</Badge>
             </button>
           </div>
         </div>
@@ -64,7 +64,7 @@ const Pricing = () => {
               >
                 {plan.popular && (
                   <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                    <Badge className="bg-red-600 text-white hover:bg-red-700 px-4 py-1">
+                    <Badge className="bg-brand-orange text-white hover:bg-brand-orange-dark px-4 py-1">
                       Most Popular
                     </Badge>
                   </div>
@@ -103,7 +103,7 @@ const Pricing = () => {
                   <Button
                     className={`w-full mb-6 ${
                       plan.popular
-                        ? 'bg-red-600 hover:bg-red-700 text-white'
+                        ? 'bg-brand-orange hover:bg-brand-orange-dark text-white'
                         : 'bg-white hover:bg-gray-50 text-gray-900 border border-gray-300'
                     }`}
                     onClick={() => navigate('/signup')}

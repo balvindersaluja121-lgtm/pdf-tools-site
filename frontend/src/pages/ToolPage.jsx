@@ -216,7 +216,7 @@ const ToolPage = () => {
                   <p className="text-gray-600 mb-4">
                     or drop files here
                   </p>
-                  <Button className="bg-red-600 hover:bg-red-700 text-white">
+                  <Button className="bg-brand-orange hover:bg-brand-orange-dark text-white">
                     Select files
                   </Button>
                   <input
@@ -235,7 +235,7 @@ const ToolPage = () => {
                     <ul className="space-y-2 mb-6">
                       {files.map((file, index) => (
                         <li key={index} className="flex items-center gap-2 p-3 bg-gray-50 rounded">
-                          <FileText className="h-5 w-5 text-red-600" />
+                          <FileText className="h-5 w-5 text-brand-orange" />
                           <span className="text-sm flex-1">{file.name}</span>
                           <span className="text-sm text-gray-500">
                             {(file.size / 1024).toFixed(1)} KB
@@ -256,7 +256,7 @@ const ToolPage = () => {
 
                     {error && (
                       <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
-                        <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+                        <AlertCircle className="h-5 w-5 text-brand-orange flex-shrink-0 mt-0.5" />
                         <div className="flex-1">
                           <h4 className="font-semibold text-red-900 mb-1">Processing Failed</h4>
                           <p className="text-sm text-red-700">{error}</p>
@@ -265,7 +265,7 @@ const ToolPage = () => {
                     )}
 
                     <Button
-                      className="w-full bg-red-600 hover:bg-red-700 text-white"
+                      className="w-full bg-brand-orange hover:bg-brand-orange-dark text-white"
                       onClick={handleProcess}
                       disabled={processing || !isImplemented}
                     >
@@ -285,7 +285,7 @@ const ToolPage = () => {
                 </p>
                 <div className="flex gap-3 justify-center">
                   <Button
-                    className="bg-red-600 hover:bg-red-700 text-white"
+                    className="bg-brand-orange hover:bg-brand-orange-dark text-white"
                     onClick={handleDownload}
                   >
                     <Download className="h-4 w-4 mr-2" />
