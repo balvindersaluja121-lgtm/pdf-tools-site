@@ -363,6 +363,176 @@ async def protect_pdf(file: UploadFile = File(...), password: str = ""):
         )
     except HTTPException:
         raise
+
+
+@pdf_router.post("/rotate-pdf")
+async def rotate_pdf(file: UploadFile = File(...), rotation: int = 90):
+    """Rotate PDF pages by specified angle"""
+    try:
+        if not file.filename.endswith('.pdf'):
+            raise HTTPException(status_code=400, detail="File must be a PDF")
+        content = await file.read()
+        rotated_pdf = pdf_service.rotate_pdf(content, rotation)
+        return Response(content=rotated_pdf, media_type="application/pdf",
+                       headers={"Content-Disposition": "attachment; filename=rotated.pdf"})
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@pdf_router.post("/add-page-numbers")
+async def add_page_numbers(file: UploadFile = File(...), position: str = "bottom"):
+    """Add page numbers to PDF"""
+    try:
+        if not file.filename.endswith('.pdf'):
+            raise HTTPException(status_code=400, detail="File must be a PDF")
+        content = await file.read()
+        numbered_pdf = pdf_service.add_page_numbers(content, position)
+        return Response(content=numbered_pdf, media_type="application/pdf",
+                       headers={"Content-Disposition": "attachment; filename=numbered.pdf"})
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@pdf_router.post("/watermark-pdf")
+async def watermark_pdf(file: UploadFile = File(...), text: str = "CONFIDENTIAL"):
+    """Add watermark to PDF"""
+    try:
+        if not file.filename.endswith('.pdf'):
+            raise HTTPException(status_code=400, detail="File must be a PDF")
+        content = await file.read()
+        watermarked_pdf = pdf_service.watermark_pdf(content, text)
+        return Response(content=watermarked_pdf, media_type="application/pdf",
+                       headers={"Content-Disposition": "attachment; filename=watermarked.pdf"})
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@pdf_router.post("/crop-pdf")
+async def crop_pdf(file: UploadFile = File(...), margin: int = 50):
+    """Crop PDF pages"""
+    try:
+        if not file.filename.endswith('.pdf'):
+            raise HTTPException(status_code=400, detail="File must be a PDF")
+        content = await file.read()
+        cropped_pdf = pdf_service.crop_pdf(content, margin)
+        return Response(content=cropped_pdf, media_type="application/pdf",
+                       headers={"Content-Disposition": "attachment; filename=cropped.pdf"})
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@pdf_router.post("/redact-pdf")
+async def redact_pdf(file: UploadFile = File(...)):
+    """Redact sensitive information from PDF"""
+    try:
+        if not file.filename.endswith('.pdf'):
+            raise HTTPException(status_code=400, detail="File must be a PDF")
+        content = await file.read()
+        redacted_pdf = pdf_service.redact_pdf(content)
+        return Response(content=redacted_pdf, media_type="application/pdf",
+                       headers={"Content-Disposition": "attachment; filename=redacted.pdf"})
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@pdf_router.post("/pdf-to-excel")
+async def pdf_to_excel(file: UploadFile = File(...)):
+    """Convert PDF to Excel"""
+    try:
+        if not file.filename.endswith('.pdf'):
+            raise HTTPException(status_code=400, detail="File must be a PDF")
+        content = await file.read()
+        excel_content = pdf_service.pdf_to_excel(content)
+        return Response(content=excel_content,
+                       media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                       headers={"Content-Disposition": "attachment; filename=converted.xlsx"})
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@pdf_router.post("/pdf-to-powerpoint")
+async def pdf_to_powerpoint(file: UploadFile = File(...)):
+    """Convert PDF to PowerPoint"""
+    try:
+        if not file.filename.endswith('.pdf'):
+            raise HTTPException(status_code=400, detail="File must be a PDF")
+        content = await file.read()
+        pptx_content = pdf_service.pdf_to_powerpoint(content)
+        return Response(content=pptx_content,
+                       media_type="application/vnd.openxmlformats-officedocument.presentationml.presentation",
+                       headers={"Content-Disposition": "attachment; filename=converted.pptx"})
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@pdf_router.post("/powerpoint-to-pdf")
+async def powerpoint_to_pdf(file: UploadFile = File(...)):
+    """Convert PowerPoint to PDF"""
+    try:
+        if not file.filename.endswith('.pptx'):
+            raise HTTPException(status_code=400, detail="File must be a PPTX file")
+        content = await file.read()
+        pdf_content = pdf_service.powerpoint_to_pdf(content)
+        return Response(content=pdf_content, media_type="application/pdf",
+                       headers={"Content-Disposition": "attachment; filename=converted.pdf"})
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@pdf_router.post("/html-to-pdf")
+async def html_to_pdf(html: str = ""):
+    """Convert HTML to PDF"""
+    try:
+        if not html:
+            raise HTTPException(status_code=400, detail="HTML content required")
+        pdf_content = pdf_service.html_to_pdf(html)
+        return Response(content=pdf_content, media_type="application/pdf",
+                       headers={"Content-Disposition": "attachment; filename=converted.pdf"})
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@pdf_router.post("/ocr-pdf")
+async def ocr_pdf(file: UploadFile = File(...)):
+    """Perform OCR on PDF"""
+    try:
+        if not file.filename.endswith('.pdf'):
+            raise HTTPException(status_code=400, detail="File must be a PDF")
+        content = await file.read()
+        ocr_pdf_content = pdf_service.ocr_pdf(content)
+        return Response(content=ocr_pdf_content, media_type="application/pdf",
+                       headers={"Content-Disposition": "attachment; filename=ocr.pdf"})
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@pdf_router.post("/repair-pdf")
+async def repair_pdf(file: UploadFile = File(...)):
+    """Repair corrupted PDF"""
+    try:
+        if not file.filename.endswith('.pdf'):
+            raise HTTPException(status_code=400, detail="File must be a PDF")
+        content = await file.read()
+        repaired_pdf = pdf_service.repair_pdf(content)
+        return Response(content=repaired_pdf, media_type="application/pdf",
+                       headers={"Content-Disposition": "attachment; filename=repaired.pdf"})
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@pdf_router.post("/pdf-to-pdfa")
+async def pdf_to_pdfa(file: UploadFile = File(...)):
+    """Convert PDF to PDF/A format"""
+    try:
+        if not file.filename.endswith('.pdf'):
+            raise HTTPException(status_code=400, detail="File must be a PDF")
+        content = await file.read()
+        pdfa_content = pdf_service.pdf_to_pdfa(content)
+        return Response(content=pdfa_content, media_type="application/pdf",
+                       headers={"Content-Disposition": "attachment; filename=pdfa.pdf"})
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
     except Exception as e:
         logger.error(f"Error in protect_pdf: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to protect PDF: {str(e)}")
@@ -440,23 +610,22 @@ async def word_to_pdf(file: UploadFile = File(...)):
 
 @pdf_router.get("/health")
 async def health_check():
-    """
-    Health check endpoint for PDF services
-    """
+    """Health check endpoint for PDF services"""
     return {
         "status": "healthy",
+        "total_services": 25,
         "services": {
-            "merge": "available",
-            "split": "available",
-            "compress": "available",
-            "pdf_to_word": "available",
-            "word_to_pdf": "available",
-            "pdf_to_jpg": "available",
-            "jpg_to_pdf": "available",
-            "jpg_to_word": "available",
-            "word_to_jpg": "available",
-            "unlock_pdf": "available",
-            "protect_pdf": "available",
-            "organize_pdf": "available"
+            "merge": "available", "split": "available", "compress": "available",
+            "pdf_to_word": "available", "word_to_pdf": "available",
+            "pdf_to_jpg": "available", "jpg_to_pdf": "available",
+            "jpg_to_word": "available", "word_to_jpg": "available",
+            "unlock_pdf": "available", "protect_pdf": "available",
+            "organize_pdf": "available", "rotate_pdf": "available",
+            "add_page_numbers": "available", "watermark_pdf": "available",
+            "crop_pdf": "available", "redact_pdf": "available",
+            "pdf_to_excel": "available", "pdf_to_powerpoint": "available",
+            "powerpoint_to_pdf": "available", "html_to_pdf": "available",
+            "ocr_pdf": "available", "repair_pdf": "available",
+            "pdf_to_pdfa": "available"
         }
     }

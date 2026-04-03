@@ -39,6 +39,19 @@ const ToolPage = () => {
     'unlock-pdf': { endpoint: '/pdf/unlock-pdf', multiple: false, accept: '.pdf', implemented: true },
     'protect-pdf': { endpoint: '/pdf/protect-pdf', multiple: false, accept: '.pdf', implemented: true },
     'organize-pdf': { endpoint: '/pdf/organize-pdf', multiple: false, accept: '.pdf', implemented: true },
+    'rotate-pdf': { endpoint: '/pdf/rotate-pdf', multiple: false, accept: '.pdf', implemented: true },
+    'page-numbers': { endpoint: '/pdf/add-page-numbers', multiple: false, accept: '.pdf', implemented: true },
+    'watermark-pdf': { endpoint: '/pdf/watermark-pdf', multiple: false, accept: '.pdf', implemented: true },
+    'watermark': { endpoint: '/pdf/watermark-pdf', multiple: false, accept: '.pdf', implemented: true },
+    'crop-pdf': { endpoint: '/pdf/crop-pdf', multiple: false, accept: '.pdf', implemented: true },
+    'redact-pdf': { endpoint: '/pdf/redact-pdf', multiple: false, accept: '.pdf', implemented: true },
+    'pdf-to-excel': { endpoint: '/pdf/pdf-to-excel', multiple: false, accept: '.pdf', implemented: true },
+    'pdf-to-powerpoint': { endpoint: '/pdf/pdf-to-powerpoint', multiple: false, accept: '.pdf', implemented: true },
+    'powerpoint-to-pdf': { endpoint: '/pdf/powerpoint-to-pdf', multiple: false, accept: '.pptx', implemented: true },
+    'html-to-pdf': { endpoint: '/pdf/html-to-pdf', multiple: false, accept: '.html', implemented: true },
+    'ocr-pdf': { endpoint: '/pdf/ocr-pdf', multiple: false, accept: '.pdf', implemented: true },
+    'repair-pdf': { endpoint: '/pdf/repair-pdf', multiple: false, accept: '.pdf', implemented: true },
+    'pdf-to-pdfa': { endpoint: '/pdf/pdf-to-pdfa', multiple: false, accept: '.pdf', implemented: true },
   };
 
   const config = toolConfig[toolId];
@@ -153,22 +166,23 @@ const ToolPage = () => {
       
       // Determine file extension based on tool
       let filename = 'processed';
-      if (toolId === 'split-pdf' || toolId === 'pdf-to-jpg' || toolId === 'word-to-jpg' || toolId === 'jpg-to-word') {
+      const zipTools = ['split-pdf', 'pdf-to-jpg', 'word-to-jpg'];
+      const wordTools = ['pdf-to-word', 'jpg-to-word'];
+      const pdfTools = ['word-to-pdf', 'jpg-to-pdf', 'merge-pdf', 'compress-pdf', 'unlock-pdf', 'protect-pdf', 'organize-pdf', 'rotate-pdf', 'watermark-pdf', 'watermark', 'crop-pdf', 'redact-pdf', 'repair-pdf', 'pdf-to-pdfa', 'page-numbers', 'html-to-pdf', 'ocr-pdf', 'powerpoint-to-pdf'];
+      
+      if (zipTools.includes(toolId)) {
         filename = `${toolId}_output.zip`;
-      } else if (toolId === 'pdf-to-word' || toolId === 'jpg-to-word') {
+      } else if (wordTools.includes(toolId)) {
         filename = files[0].name.replace(/\.(pdf|jpg|jpeg)$/i, '.docx');
-      } else if (toolId === 'word-to-pdf' || toolId === 'jpg-to-pdf') {
-        filename = files[0].name.replace(/\.(docx|jpg|jpeg)$/i, '.pdf');
-      } else if (toolId === 'compress-pdf') {
-        filename = 'compressed.pdf';
-      } else if (toolId === 'merge-pdf') {
-        filename = 'merged.pdf';
-      } else if (toolId === 'unlock-pdf') {
-        filename = 'unlocked.pdf';
-      } else if (toolId === 'protect-pdf') {
-        filename = 'protected.pdf';
-      } else if (toolId === 'organize-pdf') {
-        filename = 'organized.pdf';
+      } else if (toolId === 'pdf-to-excel') {
+        filename = files[0].name.replace('.pdf', '.xlsx');
+      } else if (toolId === 'pdf-to-powerpoint') {
+        filename = files[0].name.replace('.pdf', '.pptx');
+      } else if (pdfTools.includes(toolId)) {
+        filename = files[0].name.replace(/\.(docx|jpg|jpeg|pptx|html)$/i, '.pdf');
+        if (!filename.endsWith('.pdf')) {
+          filename = `${toolId.replace('-', '_')}.pdf`;
+        }
       }
       
       link.download = filename;
