@@ -2,7 +2,7 @@
 
 [build]
   command = "npm run build"
-  publish = "dist"
+  publish = "Frontend/public"
 
 [dev]
   command = "npm run dev"
