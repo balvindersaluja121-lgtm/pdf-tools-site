@@ -1,7 +1,7 @@
 # Netlify Configuration
 
 [build]
-  command = "command = "cd frontend && npm install --legacy-peer-deps && npm run build""
+  command = "cd frontend && npm install --legacy-peer-deps && npm run build""
   publish = "frontend/build"
 
 [functions]
