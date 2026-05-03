@@ -33,8 +33,8 @@ let webpackConfig = {
     },
     configure: (webpackConfig) => {
       // Remove ForkTsCheckerWebpackPlugin to fix validateOptions error
-      webpackConfig.plugins = webpackConfig.plugins.filter(
-  (p) => !p.typescriptVersion
+webpackConfig.plugins = webpackConfig.plugins.filter(
+  (p) => !p.options || !p.options.typescript
       );
       // Add ignored patterns to reduce watched directories
       webpackConfig.watchOptions = {
