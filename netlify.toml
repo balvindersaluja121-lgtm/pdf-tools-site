@@ -1,11 +1,9 @@
 # Netlify Configuration
 
 [build]
-  
-  publish = "Frontend/public"
-
-[dev]
-  command = "npm run dev"
+  base = "frontend"
+  command = "npm run build"
+  publish = "frontend/build"
 
 [functions]
   directory = "netlify/functions"
