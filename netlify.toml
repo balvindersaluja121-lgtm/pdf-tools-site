@@ -1,7 +1,7 @@
 # Netlify Configuration
 
 [build]
- command = "cd frontend && npm install --force && DISABLE_ESLINT_PLUGIN=true npm run build"
+ command = "cd frontend && npm install --force && NODE_OPTIONS=--openssl-legacy-provider DISABLE_ESLINT_PLUGIN=true npm run build"
   publish = "frontend/build"
 
 [functions]
