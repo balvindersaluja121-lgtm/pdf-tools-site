@@ -4,7 +4,6 @@ python-multipart
 pydantic
 pillow
 PyPDF2
-pdf2image
 python-docx
 reportlab
 python-dotenv
