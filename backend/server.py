@@ -2,12 +2,13 @@ from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 import shutil
-import fitz  # PyMuPDF
+import fitz
 from docx import Document
+import os
 
 app = FastAPI()
 
-# ✅ CORS
+# CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -20,30 +21,42 @@ app.add_middleware(
 def home():
     return {"message": "Backend Running 🚀"}
 
-# ✅ REAL PDF → WORD
+# PDF TO WORD
 @app.post("/api/pdf/pdf-to-word")
 async def pdf_to_word(file: UploadFile = File(...)):
-    
-    input_path = f"temp_{file.filename}"
-    output_path = input_path.replace(".pdf", ".docx")
 
-    # Save file
+    input_path = f"temp_{file.filename}"
+    output_path = "converted.docx"
+
+    # Save uploaded PDF
     with open(input_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
-    # Extract text
+    # Open PDF
     pdf = fitz.open(input_path)
-    text = ""
 
+    doc = Document()
+
+    # Extract text page by page
     for page in pdf:
-        text += page.get_text()
+        text = page.get_text()
+
+        if text.strip():
+            doc.add_paragraph(text)
+        else:
+            doc.add_paragraph("[No readable text found on this page]")
 
     pdf.close()
 
-    # Create Word file
-    doc = Document()
-    doc.add_paragraph(text if text else "No readable text found")
+    # Save Word
     doc.save(output_path)
 
-    # Return file
-    return FileResponse(output_path, filename="converted.docx")
+    # Cleanup PDF
+    os.remove(input_path)
+
+    # Return DOCX
+    return FileResponse(
+        output_path,
+        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        filename="converted.docx"
+    )
