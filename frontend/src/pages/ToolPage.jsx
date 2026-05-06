@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { pdfTools } from '../data/mockData';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
-import { Upload, Download, ArrowLeft, FileText, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Upload, Download, ArrowLeft, FileText, CheckCircle2 } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
 import { Progress } from '../components/ui/progress';
 
@@ -38,6 +38,7 @@ const ToolPage = () => {
     );
   }
 
+  // ✅ File select
   const handleFileSelect = (e) => {
     const selectedFiles = Array.from(e.target.files);
     setFiles(selectedFiles);
@@ -47,7 +48,7 @@ const ToolPage = () => {
     setDownloadUrl(null);
   };
 
-  // ✅ DEMO MODE PROCESS (NO BACKEND)
+  // ✅ DEMO PROCESS (no backend)
   const handleProcess = async () => {
     if (files.length === 0) {
       toast({
@@ -73,7 +74,7 @@ const ToolPage = () => {
         setProcessing(false);
         setCompleted(true);
 
-        // return same file as demo output
+        // Demo output (same file)
         const url = URL.createObjectURL(files[0]);
         setDownloadUrl(url);
 
@@ -85,6 +86,7 @@ const ToolPage = () => {
     }, 400);
   };
 
+  // ✅ Download
   const handleDownload = () => {
     if (downloadUrl) {
       const link = document.createElement('a');
@@ -101,59 +103,87 @@ const ToolPage = () => {
 
       {/* HEADER */}
       <Button variant="ghost" onClick={() => navigate('/')}>
-        <ArrowLeft className="mr-2 h-4 w-4" /> Back
+        <ArrowLeft className="mr-2 h-4 w-4" />
+        Back
       </Button>
 
       <h1 className="text-3xl font-bold mb-6">{tool.name}</h1>
 
-      {/* UPLOAD */}
+      {/* UPLOAD SECTION */}
       {!completed ? (
         <Card>
           <CardContent className="p-6 text-center">
+
             <div
-              className="border-2 border-dashed p-10 cursor-pointer"
+              className="border-2 border-dashed p-10 cursor-pointer hover:border-red-500 transition"
               onClick={() => fileInputRef.current?.click()}
             >
               <Upload className="mx-auto mb-4" size={40} />
-              <p>Select or upload file</p>
+              <p>Select or upload file(s)</p>
 
               <input
                 ref={fileInputRef}
                 type="file"
+                multiple
                 className="hidden"
                 onChange={handleFileSelect}
               />
             </div>
 
+            {/* ✅ SHOW ALL FILES */}
             {files.length > 0 && (
-              <div className="mt-4">
-                <p>{files[0].name}</p>
+              <div className="mt-4 text-left">
+                <h4 className="font-semibold mb-2">Selected files:</h4>
 
+                {files.map((file, index) => (
+                  <p key={index} className="text-sm">
+                    {file.name}
+                  </p>
+                ))}
+
+                {/* Progress */}
                 {processing && (
-                  <Progress value={progress} className="mt-2" />
+                  <Progress value={progress} className="mt-3" />
                 )}
 
+                {/* Error */}
                 {error && (
                   <p className="text-red-500 mt-2">{error}</p>
                 )}
 
-                <Button className="mt-4" onClick={handleProcess}>
-                  {processing ? 'Processing...' : 'Process'}
+                <Button className="mt-4 w-full" onClick={handleProcess}>
+                  {processing ? 'Processing...' : `Process ${tool.name}`}
                 </Button>
               </div>
             )}
+
           </CardContent>
         </Card>
       ) : (
         <Card>
           <CardContent className="p-6 text-center">
             <CheckCircle2 className="mx-auto text-green-600 mb-4" size={40} />
-            <h2 className="text-xl mb-4">Done!</h2>
+            <h2 className="text-xl mb-4">Processing complete!</h2>
 
             <Button onClick={handleDownload}>
               <Download className="mr-2 h-4 w-4" />
               Download
             </Button>
+
+            <Button
+              variant="outline"
+              className="mt-3 ml-2"
+              onClick={() => {
+                setFiles([]);
+                setCompleted(false);
+                setProgress(0);
+                setDownloadUrl(null);
+                setError(null);
+              }}
+            >
+              Process another file
+            </Button>
+
           </CardContent>
         </Card>
       )}
