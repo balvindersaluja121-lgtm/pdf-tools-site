@@ -1,54 +1,49 @@
-const BACKEND_URL = "https://pdf-tools-site-8js9.onrender.com";
-const API = `${BACKEND_URL}/api`;
+from fastapi import FastAPI, UploadFile, File
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+import shutil
+import fitz  # PyMuPDF
+from docx import Document
 
-const handleProcess = async () => {
-  if (files.length === 0) {
-    toast({
-      title: 'No files selected',
-      description: 'Please select files',
-      variant: 'destructive'
-    });
-    return;
-  }
+app = FastAPI()
 
-  setProcessing(true);
-  setProgress(30);
-  setError(null);
+# ✅ CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-  try {
-    const formData = new FormData();
-    formData.append("file", files[0]);
+@app.get("/")
+def home():
+    return {"message": "Backend Running 🚀"}
 
-    const response = await fetch(`${API}/pdf/pdf-to-word`, {
-      method: "POST",
-      body: formData
-    });
+# ✅ REAL PDF → WORD
+@app.post("/api/pdf/pdf-to-word")
+async def pdf_to_word(file: UploadFile = File(...)):
+    
+    input_path = f"temp_{file.filename}"
+    output_path = input_path.replace(".pdf", ".docx")
 
-    if (!response.ok) {
-      throw new Error("Server error");
-    }
+    # Save file
+    with open(input_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
 
-    const blob = await response.blob();
-    const url = window.URL.createObjectURL(blob);
+    # Extract text
+    pdf = fitz.open(input_path)
+    text = ""
 
-    setDownloadUrl(url);
-    setCompleted(true);
-    setProcessing(false);
-    setProgress(100);
+    for page in pdf:
+        text += page.get_text()
 
-    toast({
-      title: "Success",
-      description: "File converted successfully"
-    });
+    pdf.close()
 
-  } catch (err) {
-    setProcessing(false);
-    setError("Conversion failed");
+    # Create Word file
+    doc = Document()
+    doc.add_paragraph(text if text else "No readable text found")
+    doc.save(output_path)
 
-    toast({
-      title: "Error",
-      description: "Backend not responding",
-      variant: "destructive"
-    });
-  }
-};
+    # Return file
+    return FileResponse(output_path, filename="converted.docx")
