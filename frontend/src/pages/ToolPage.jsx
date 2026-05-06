@@ -23,13 +23,13 @@ const handleProcess = async () => {
       setProcessing(false);
       setCompleted(true);
 
-      // Use original file as output (demo)
+      // Demo output (returns same file)
       const url = URL.createObjectURL(files[0]);
       setDownloadUrl(url);
 
       toast({
         title: 'Processing complete!',
-        description: 'Demo mode (backend not connected)',
+        description: 'Demo mode (no backend yet)',
       });
     }
   }, 400);
