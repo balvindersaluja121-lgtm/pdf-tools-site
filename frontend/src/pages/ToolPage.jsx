@@ -3,9 +3,12 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { pdfTools } from '../data/mockData';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
-import { Upload, Download, ArrowLeft, FileText, CheckCircle2 } from 'lucide-react';
+import { Upload, Download, ArrowLeft, CheckCircle2 } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
 import { Progress } from '../components/ui/progress';
+
+const BACKEND_URL = "https://pdf-tools-site-8js9.onrender.com";
+const API = `${BACKEND_URL}/api`;
 
 const ToolPage = () => {
   const { toolId } = useParams();
@@ -38,7 +41,7 @@ const ToolPage = () => {
     );
   }
 
-  // ✅ File select
+  // File select
   const handleFileSelect = (e) => {
     const selectedFiles = Array.from(e.target.files);
     setFiles(selectedFiles);
@@ -48,7 +51,7 @@ const ToolPage = () => {
     setDownloadUrl(null);
   };
 
-  // ✅ DEMO PROCESS (no backend)
+  // REAL BACKEND PROCESS
   const handleProcess = async () => {
     if (files.length === 0) {
       toast({
@@ -60,38 +63,53 @@ const ToolPage = () => {
     }
 
     setProcessing(true);
-    setProgress(0);
+    setProgress(30);
     setError(null);
 
-    let progressValue = 0;
+    try {
+      const formData = new FormData();
+      formData.append("file", files[0]);
 
-    const interval = setInterval(() => {
-      progressValue += 20;
-      setProgress(progressValue);
+      const response = await fetch(`${API}/pdf/pdf-to-word`, {
+        method: "POST",
+        body: formData
+      });
 
-      if (progressValue >= 100) {
-        clearInterval(interval);
-        setProcessing(false);
-        setCompleted(true);
-
-        // Demo output (same file)
-        const url = URL.createObjectURL(files[0]);
-        setDownloadUrl(url);
-
-        toast({
-          title: 'Processing complete!',
-          description: 'Demo mode (no backend yet)',
-        });
+      if (!response.ok) {
+        throw new Error("Server error");
       }
-    }, 400);
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+
+      setDownloadUrl(url);
+      setCompleted(true);
+      setProcessing(false);
+      setProgress(100);
+
+      toast({
+        title: "Success",
+        description: "File converted successfully"
+      });
+
+    } catch (err) {
+      setProcessing(false);
+      setError("Conversion failed");
+
+      toast({
+        title: "Error",
+        description: "Backend not responding",
+        variant: "destructive"
+      });
+    }
   };
 
-  // ✅ Download
+  // Download
   const handleDownload = () => {
     if (downloadUrl) {
       const link = document.createElement('a');
       link.href = downloadUrl;
-      link.download = files[0]?.name || 'file.pdf';
+      link.download = "converted.docx";
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -101,7 +119,6 @@ const ToolPage = () => {
   return (
     <div className="min-h-screen bg-gray-50 p-4">
 
-      {/* HEADER */}
       <Button variant="ghost" onClick={() => navigate('/')}>
         <ArrowLeft className="mr-2 h-4 w-4" />
         Back
@@ -109,13 +126,12 @@ const ToolPage = () => {
 
       <h1 className="text-3xl font-bold mb-6">{tool.name}</h1>
 
-      {/* UPLOAD SECTION */}
       {!completed ? (
         <Card>
           <CardContent className="p-6 text-center">
 
             <div
-              className="border-2 border-dashed p-10 cursor-pointer hover:border-red-500 transition"
+              className="border-2 border-dashed p-10 cursor-pointer hover:border-red-500"
               onClick={() => fileInputRef.current?.click()}
             >
               <Upload className="mx-auto mb-4" size={40} />
@@ -124,29 +140,23 @@ const ToolPage = () => {
               <input
                 ref={fileInputRef}
                 type="file"
-                multiple
                 className="hidden"
                 onChange={handleFileSelect}
               />
             </div>
 
-            {/* ✅ SHOW ALL FILES */}
             {files.length > 0 && (
               <div className="mt-4 text-left">
                 <h4 className="font-semibold mb-2">Selected files:</h4>
 
                 {files.map((file, index) => (
-                  <p key={index} className="text-sm">
-                    {file.name}
-                  </p>
+                  <p key={index} className="text-sm">{file.name}</p>
                 ))}
 
-                {/* Progress */}
                 {processing && (
                   <Progress value={progress} className="mt-3" />
                 )}
 
-                {/* Error */}
                 {error && (
                   <p className="text-red-500 mt-2">{error}</p>
                 )}
