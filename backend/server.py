@@ -1,61 +1,41 @@
-from fastapi import FastAPI, APIRouter
-from dotenv import load_dotenv
-from starlette.middleware.cors import CORSMiddleware
-import os
-from pathlib import Path
-from pydantic import BaseModel, Field, ConfigDict
+from fastapi import FastAPI, UploadFile, File
+from fastapi.middleware.cors import CORSMiddleware
 from typing import List
-import uuid
-from datetime import datetime, timezone
+import shutil
+import os
+from docx import Document
 
-# Load environment variables
-ROOT_DIR = Path(__file__).parent
-load_dotenv(ROOT_DIR / '.env')
-
-# Create app
 app = FastAPI()
 
-# Router
-api_router = APIRouter(prefix="/api")
-
-# Models
-class StatusCheck(BaseModel):
-    model_config = ConfigDict(extra="ignore")
-    
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    client_name: str
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-
-
-class StatusCheckCreate(BaseModel):
-    client_name: str
-
-
-# Routes
-@api_router.get("/")
-async def root():
-    return {"message": "Backend is working 🚀"}
-
-
-@api_router.post("/status", response_model=StatusCheck)
-async def create_status_check(input: StatusCheckCreate):
-    status_obj = StatusCheck(**input.model_dump())
-    return status_obj
-
-
-@api_router.get("/status", response_model=List[StatusCheck])
-async def get_status_checks():
-    return []
-
-
-# Include router
-app.include_router(api_router)
-
-# CORS
+# ✅ CORS (VERY IMPORTANT)
 app.add_middleware(
     CORSMiddleware,
-    allow_credentials=True,
     allow_origins=["*"],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Root
+@app.get("/")
+def home():
+    return {"message": "Backend Running 🚀"}
+
+# ✅ PDF → WORD (Basic working version)
+@app.post("/api/pdf/pdf-to-word")
+async def pdf_to_word(file: UploadFile = File(...)):
+    input_path = f"temp_{file.filename}"
+    output_path = input_path.replace(".pdf", ".docx")
+
+    # Save uploaded file
+    with open(input_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    # ⚠️ Simple demo conversion (text only)
+    doc = Document()
+    doc.add_paragraph("Converted from PDF (Demo version)")
+    doc.save(output_path)
+
+    # Return file
+    from fastapi.responses import FileResponse
+    return FileResponse(output_path, filename=output_path)
