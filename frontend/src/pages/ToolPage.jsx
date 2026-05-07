@@ -10,98 +10,65 @@ export default function ToolPage() {
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  const getTitle = () => {
-    switch (tool) {
-      case "pdf-to-word":
-        return "PDF to Word";
+  const toolConfig = {
+    "pdf-to-word": {
+      title: "PDF to Word",
+      description: "Convert PDF to editable Word document",
+      endpoint: "/pdf/pdf-to-word",
+      accept: ".pdf",
+    },
 
-      case "jpg-to-pdf":
-        return "JPG to PDF";
+    "jpg-to-pdf": {
+      title: "JPG to PDF",
+      description: "Convert JPG images into PDF",
+      endpoint: "/pdf/jpg-to-pdf",
+      accept: "image/*",
+    },
 
-      case "pdf-to-jpg":
-        return "PDF to JPG";
+    "pdf-to-jpg": {
+      title: "PDF to JPG",
+      description: "Convert PDF pages into JPG",
+      endpoint: "/pdf/pdf-to-jpg",
+      accept: ".pdf",
+    },
 
-      case "merge-pdf":
-        return "Merge PDF";
+    "merge-pdf": {
+      title: "Merge PDF",
+      description: "Merge multiple PDF files",
+      endpoint: "/pdf/merge-pdf",
+      accept: ".pdf",
+    },
 
-      case "split-pdf":
-        return "Split PDF";
+    "split-pdf": {
+      title: "Split PDF",
+      description: "Split PDF pages",
+      endpoint: "/pdf/split-pdf",
+      accept: ".pdf",
+    },
 
-      case "compress-pdf":
-        return "Compress PDF";
+    "compress-pdf": {
+      title: "Compress PDF",
+      description: "Reduce PDF file size",
+      endpoint: "/pdf/compress-pdf",
+      accept: ".pdf",
+    },
 
-      case "protect-pdf":
-        return "Protect PDF";
+    "protect-pdf": {
+      title: "Protect PDF",
+      description: "Add password protection",
+      endpoint: "/pdf/protect-pdf",
+      accept: ".pdf",
+    },
 
-      case "unlock-pdf":
-        return "Unlock PDF";
-
-      default:
-        return "PDF Tool";
-    }
+    "unlock-pdf": {
+      title: "Unlock PDF",
+      description: "Remove PDF password",
+      endpoint: "/pdf/unlock-pdf",
+      accept: ".pdf",
+    },
   };
 
-  const getDescription = () => {
-    switch (tool) {
-      case "pdf-to-word":
-        return "Convert PDF files into editable Word documents";
-
-      case "jpg-to-pdf":
-        return "Convert JPG images into PDF";
-
-      case "pdf-to-jpg":
-        return "Convert PDF pages into JPG images";
-
-      case "merge-pdf":
-        return "Merge multiple PDF files into one";
-
-      case "split-pdf":
-        return "Split PDF pages";
-
-      case "compress-pdf":
-        return "Reduce PDF size";
-
-      case "protect-pdf":
-        return "Add password protection";
-
-      case "unlock-pdf":
-        return "Remove PDF password";
-
-      default:
-        return "Easy PDF tool";
-    }
-  };
-
-  const getEndpoint = () => {
-    switch (tool) {
-      case "pdf-to-word":
-        return "/pdf/pdf-to-word";
-
-      case "jpg-to-pdf":
-        return "/pdf/jpg-to-pdf";
-
-      case "pdf-to-jpg":
-        return "/pdf/pdf-to-jpg";
-
-      case "merge-pdf":
-        return "/pdf/merge-pdf";
-
-      case "split-pdf":
-        return "/pdf/split-pdf";
-
-      case "compress-pdf":
-        return "/pdf/compress-pdf";
-
-      case "protect-pdf":
-        return "/pdf/protect-pdf";
-
-      case "unlock-pdf":
-        return "/pdf/unlock-pdf";
-
-      default:
-        return "/pdf/pdf-to-word";
-    }
-  };
+  const currentTool = toolConfig[tool];
 
   const handleUpload = async () => {
     if (!file) {
@@ -113,15 +80,26 @@ export default function ToolPage() {
       setLoading(true);
 
       const formData = new FormData();
-      formData.append("file", file);
+
+      if (tool === "merge-pdf") {
+        for (let i = 0; i < file.length; i++) {
+          formData.append("files", file[i]);
+        }
+      } else {
+        formData.append("file", file);
+      }
 
       const response = await fetch(
-        `${API}${getEndpoint()}`,
+        `${API}${currentTool.endpoint}`,
         {
           method: "POST",
           body: formData,
         }
       );
+
+      if (!response.ok) {
+        throw new Error("Server error");
+      }
 
       const blob = await response.blob();
 
@@ -133,8 +111,8 @@ export default function ToolPage() {
       a.click();
 
     } catch (error) {
-      alert("Tool failed");
       console.error(error);
+      alert("Tool failed. Backend route may not exist.");
     } finally {
       setLoading(false);
     }
@@ -144,7 +122,8 @@ export default function ToolPage() {
     <div
       style={{
         minHeight: "100vh",
-        background: "#f4f7fb",
+        background:
+          "linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)",
         padding: "40px",
         fontFamily: "Arial",
       }}
@@ -152,13 +131,15 @@ export default function ToolPage() {
       <button
         onClick={() => navigate("/")}
         style={{
-          padding: "10px 18px",
-          border: "none",
-          borderRadius: "8px",
-          background: "#2563eb",
+          background: "#ea580c",
           color: "white",
+          border: "none",
+          padding: "12px 22px",
+          borderRadius: "10px",
           cursor: "pointer",
+          fontSize: "16px",
           marginBottom: "30px",
+          fontWeight: "bold",
         }}
       >
         ← Back
@@ -166,37 +147,48 @@ export default function ToolPage() {
 
       <div
         style={{
-          maxWidth: "700px",
+          maxWidth: "750px",
           margin: "auto",
           background: "white",
           padding: "40px",
-          borderRadius: "16px",
-          boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
+          borderRadius: "20px",
+          boxShadow: "0 10px 25px rgba(0,0,0,0.1)",
         }}
       >
         <h1
           style={{
+            color: "#ea580c",
+            fontSize: "36px",
             marginBottom: "10px",
-            color: "#111827",
           }}
         >
-          {getTitle()}
+          {currentTool?.title || "PDF Tool"}
         </h1>
 
         <p
           style={{
-            color: "#6b7280",
+            color: "#666",
             marginBottom: "30px",
+            fontSize: "18px",
           }}
         >
-          {getDescription()}
+          {currentTool?.description || "Easy PDF Tool"}
         </p>
 
         <input
           type="file"
-          onChange={(e) => setFile(e.target.files[0])}
+          accept={currentTool?.accept}
+          multiple={tool === "merge-pdf"}
+          onChange={(e) =>
+            setFile(
+              tool === "merge-pdf"
+                ? e.target.files
+                : e.target.files[0]
+            )
+          }
           style={{
-            marginBottom: "20px",
+            marginBottom: "25px",
+            fontSize: "16px",
           }}
         />
 
@@ -206,13 +198,14 @@ export default function ToolPage() {
           onClick={handleUpload}
           disabled={loading}
           style={{
-            padding: "14px 24px",
-            border: "none",
-            borderRadius: "10px",
-            background: "#2563eb",
+            background: "#ea580c",
             color: "white",
-            fontSize: "16px",
+            border: "none",
+            padding: "14px 28px",
+            borderRadius: "12px",
             cursor: "pointer",
+            fontSize: "18px",
+            fontWeight: "bold",
           }}
         >
           {loading ? "Processing..." : "Upload & Convert"}
