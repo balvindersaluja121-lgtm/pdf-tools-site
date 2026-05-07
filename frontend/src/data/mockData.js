@@ -1,10 +1,3 @@
-export const categories = [
-  {
-    id: 1,
-    name: "PDF Tools"
-  }
-];
-
 export const pdfTools = [
 
   {
@@ -65,4 +58,10 @@ export const pdfTools = [
 
 ];
 
-  
+
+// ADD THIS
+export const categories = [];
+
+
+// ADD THIS
+export const pricingPlans = [];
