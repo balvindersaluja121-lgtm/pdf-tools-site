@@ -1,33 +1,33 @@
-import React from "react";
-import "./App.css";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Header from "./components/Header";
-import Footer from "./components/Footer";
 import Home from "./pages/Home";
-import Pricing from "./pages/Pricing";
-import Login from "./pages/Login";
-import Signup from "./pages/Signup";
 import ToolPage from "./pages/ToolPage";
-import { Toaster } from "./components/ui/toaster";
 
 function App() {
   return (
-    <div className="App">
-      <BrowserRouter>
-        <Header />
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/pricing" element={<Pricing />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/:toolId" element={<ToolPage />} />
-        </Routes>
-        <Footer />
-        <Toaster />
-      </BrowserRouter>
-    </div>
+    <BrowserRouter>
+      <Routes>
+
+        <Route path="/" element={<Home />} />
+
+        <Route path="/pdf-to-word" element={<ToolPage toolId="pdf-to-word" />} />
+
+        <Route path="/jpg-to-pdf" element={<ToolPage toolId="jpg-to-pdf" />} />
+
+        <Route path="/pdf-to-jpg" element={<ToolPage toolId="pdf-to-jpg" />} />
+
+        <Route path="/merge-pdf" element={<ToolPage toolId="merge-pdf" />} />
+
+        <Route path="/split-pdf" element={<ToolPage toolId="split-pdf" />} />
+
+        <Route path="/compress-pdf" element={<ToolPage toolId="compress-pdf" />} />
+
+        <Route path="/protect-pdf" element={<ToolPage toolId="protect-pdf" />} />
+
+        <Route path="/unlock-pdf" element={<ToolPage toolId="unlock-pdf" />} />
+
+      </Routes>
+    </BrowserRouter>
   );
 }
 
 export default App;
-
