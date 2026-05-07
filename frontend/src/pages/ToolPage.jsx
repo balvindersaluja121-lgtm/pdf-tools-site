@@ -1,87 +1,33 @@
 import React, { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 
 const API = "https://pdf-tools-site-8js9.onrender.com";
 
 export default function ToolPage() {
-  const { tool } = useParams();
-  const navigate = useNavigate();
+
+  const location = useLocation();
+
+  const toolSlug = location.pathname.replace("/", "");
 
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  const toolConfig = {
-    "pdf-to-word": {
-      title: "PDF to Word",
-      description: "Convert PDF to editable Word document",
-      endpoint: "/pdf/pdf-to-word",
-      accept: ".pdf",
-    },
+  const handleSubmit = async () => {
 
-    "jpg-to-pdf": {
-      title: "JPG to PDF",
-      description: "Convert JPG images into PDF",
-      endpoint: "/pdf/jpg-to-pdf",
-      accept: "image/*",
-    },
-
-    "pdf-to-jpg": {
-      title: "PDF to JPG",
-      description: "Convert PDF pages into JPG",
-      endpoint: "/pdf/pdf-to-jpg",
-      accept: ".pdf",
-    },
-
-    "merge-pdf": {
-      title: "Merge PDF",
-      description: "Merge multiple PDF files",
-      endpoint: "/pdf/merge-pdf",
-      accept: ".pdf",
-    },
-
-    "split-pdf": {
-      title: "Split PDF",
-      description: "Split PDF pages",
-      endpoint: "/pdf/split-pdf",
-      accept: ".pdf",
-    },
-
-    "compress-pdf": {
-      title: "Compress PDF",
-      description: "Reduce PDF file size",
-      endpoint: "/pdf/compress-pdf",
-      accept: ".pdf",
-    },
-
-    "protect-pdf": {
-      title: "Protect PDF",
-      description: "Add password protection",
-      endpoint: "/pdf/protect-pdf",
-      accept: ".pdf",
-    },
-
-    "unlock-pdf": {
-      title: "Unlock PDF",
-      description: "Remove PDF password",
-      endpoint: "/pdf/unlock-pdf",
-      accept: ".pdf",
-    },
-  };
-
-  const currentTool = toolConfig[tool];
-
-  const handleUpload = async () => {
     if (!file) {
       alert("Please select file");
       return;
     }
 
+    setLoading(true);
+
     try {
-      setLoading(true);
 
       const formData = new FormData();
 
-      if (tool === "merge-pdf") {
+      if (
+        toolSlug === "merge-pdf"
+      ) {
         for (let i = 0; i < file.length; i++) {
           formData.append("files", file[i]);
         }
@@ -89,16 +35,53 @@ export default function ToolPage() {
         formData.append("file", file);
       }
 
-      const response = await fetch(
-        `${API}${currentTool.endpoint}`,
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
+      let endpoint = "";
+
+      switch (toolSlug) {
+
+        case "pdf-to-word":
+          endpoint = "/api/pdf/pdf-to-word";
+          break;
+
+        case "jpg-to-pdf":
+          endpoint = "/api/pdf/jpg-to-pdf";
+          break;
+
+        case "pdf-to-jpg":
+          endpoint = "/api/pdf/pdf-to-jpg";
+          break;
+
+        case "merge-pdf":
+          endpoint = "/api/pdf/merge-pdf";
+          break;
+
+        case "split-pdf":
+          endpoint = "/api/pdf/split-pdf";
+          break;
+
+        case "compress-pdf":
+          endpoint = "/api/pdf/compress-pdf";
+          break;
+
+        case "protect-pdf":
+          endpoint = "/api/pdf/protect-pdf";
+          break;
+
+        case "unlock-pdf":
+          endpoint = "/api/pdf/unlock-pdf";
+          break;
+
+        default:
+          endpoint = "/api/pdf/pdf-to-word";
+      }
+
+      const response = await fetch(`${API}${endpoint}`, {
+        method: "POST",
+        body: formData,
+      });
 
       if (!response.ok) {
-        throw new Error("Server error");
+        throw new Error("Backend route may not exist");
       }
 
       const blob = await response.blob();
@@ -106,15 +89,50 @@ export default function ToolPage() {
       const url = window.URL.createObjectURL(blob);
 
       const a = document.createElement("a");
+
       a.href = url;
-      a.download = "converted-file";
+
+      if (toolSlug === "pdf-to-word") {
+        a.download = "converted.docx";
+      }
+      else if (toolSlug === "jpg-to-pdf") {
+        a.download = "converted.pdf";
+      }
+      else if (toolSlug === "pdf-to-jpg") {
+        a.download = "converted.zip";
+      }
+      else if (toolSlug === "merge-pdf") {
+        a.download = "merged.pdf";
+      }
+      else if (toolSlug === "split-pdf") {
+        a.download = "split.pdf";
+      }
+      else if (toolSlug === "compress-pdf") {
+        a.download = "compressed.pdf";
+      }
+      else if (toolSlug === "protect-pdf") {
+        a.download = "protected.pdf";
+      }
+      else if (toolSlug === "unlock-pdf") {
+        a.download = "unlocked.pdf";
+      }
+
+      document.body.appendChild(a);
+
       a.click();
 
+      a.remove();
+
     } catch (error) {
+
       console.error(error);
+
       alert("Tool failed. Backend route may not exist.");
+
     } finally {
+
       setLoading(false);
+
     }
   };
 
@@ -122,95 +140,53 @@ export default function ToolPage() {
     <div
       style={{
         minHeight: "100vh",
-        background:
-          "linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)",
+        background: "#fff7ed",
         padding: "40px",
-        fontFamily: "Arial",
+        textAlign: "center",
       }}
     >
+
+      <h1
+        style={{
+          color: "#ea580c",
+          fontSize: "40px",
+          marginBottom: "20px",
+        }}
+      >
+        {toolSlug.replace(/-/g, " ").toUpperCase()}
+      </h1>
+
+      <input
+        type="file"
+        multiple={toolSlug === "merge-pdf"}
+        onChange={(e) =>
+          toolSlug === "merge-pdf"
+            ? setFile(e.target.files)
+            : setFile(e.target.files[0])
+        }
+        style={{
+          marginBottom: "20px",
+        }}
+      />
+
+      <br />
+
       <button
-        onClick={() => navigate("/")}
+        onClick={handleSubmit}
+        disabled={loading}
         style={{
           background: "#ea580c",
           color: "white",
           border: "none",
-          padding: "12px 22px",
-          borderRadius: "10px",
+          padding: "14px 28px",
+          borderRadius: "8px",
           cursor: "pointer",
-          fontSize: "16px",
-          marginBottom: "30px",
-          fontWeight: "bold",
+          fontSize: "18px",
         }}
       >
-        ← Back
+        {loading ? "Processing..." : "Convert Now"}
       </button>
 
-      <div
-        style={{
-          maxWidth: "750px",
-          margin: "auto",
-          background: "white",
-          padding: "40px",
-          borderRadius: "20px",
-          boxShadow: "0 10px 25px rgba(0,0,0,0.1)",
-        }}
-      >
-        <h1
-          style={{
-            color: "#ea580c",
-            fontSize: "36px",
-            marginBottom: "10px",
-          }}
-        >
-          {currentTool?.title || "PDF Tool"}
-        </h1>
-
-        <p
-          style={{
-            color: "#666",
-            marginBottom: "30px",
-            fontSize: "18px",
-          }}
-        >
-          {currentTool?.description || "Easy PDF Tool"}
-        </p>
-
-        <input
-          type="file"
-          accept={currentTool?.accept}
-          multiple={tool === "merge-pdf"}
-          onChange={(e) =>
-            setFile(
-              tool === "merge-pdf"
-                ? e.target.files
-                : e.target.files[0]
-            )
-          }
-          style={{
-            marginBottom: "25px",
-            fontSize: "16px",
-          }}
-        />
-
-        <br />
-
-        <button
-          onClick={handleUpload}
-          disabled={loading}
-          style={{
-            background: "#ea580c",
-            color: "white",
-            border: "none",
-            padding: "14px 28px",
-            borderRadius: "12px",
-            cursor: "pointer",
-            fontSize: "18px",
-            fontWeight: "bold",
-          }}
-        >
-          {loading ? "Processing..." : "Upload & Convert"}
-        </button>
-      </div>
     </div>
   );
 }
