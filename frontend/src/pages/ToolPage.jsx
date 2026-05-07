@@ -1,146 +1,223 @@
-return (
-  <div
-    style={{
-      minHeight: "100vh",
-      background: "#f5f7fb",
-      padding: "40px",
-      fontFamily: "Arial"
-    }}
-  >
+import React, { useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 
-    <button
-      onClick={() => navigate("/")}
-      style={{
-        background: "transparent",
-        border: "none",
-        cursor: "pointer",
-        fontSize: "16px",
-        marginBottom: "30px"
-      }}
-    >
-      ← Back
-    </button>
+const API = "https://pdf-tools-site-8js9.onrender.com";
 
+export default function ToolPage() {
+  const { tool } = useParams();
+  const navigate = useNavigate();
+
+  const [file, setFile] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const getTitle = () => {
+    switch (tool) {
+      case "pdf-to-word":
+        return "PDF to Word";
+
+      case "jpg-to-pdf":
+        return "JPG to PDF";
+
+      case "pdf-to-jpg":
+        return "PDF to JPG";
+
+      case "merge-pdf":
+        return "Merge PDF";
+
+      case "split-pdf":
+        return "Split PDF";
+
+      case "compress-pdf":
+        return "Compress PDF";
+
+      case "protect-pdf":
+        return "Protect PDF";
+
+      case "unlock-pdf":
+        return "Unlock PDF";
+
+      default:
+        return "PDF Tool";
+    }
+  };
+
+  const getDescription = () => {
+    switch (tool) {
+      case "pdf-to-word":
+        return "Convert PDF files into editable Word documents";
+
+      case "jpg-to-pdf":
+        return "Convert JPG images into PDF";
+
+      case "pdf-to-jpg":
+        return "Convert PDF pages into JPG images";
+
+      case "merge-pdf":
+        return "Merge multiple PDF files into one";
+
+      case "split-pdf":
+        return "Split PDF pages";
+
+      case "compress-pdf":
+        return "Reduce PDF size";
+
+      case "protect-pdf":
+        return "Add password protection";
+
+      case "unlock-pdf":
+        return "Remove PDF password";
+
+      default:
+        return "Easy PDF tool";
+    }
+  };
+
+  const getEndpoint = () => {
+    switch (tool) {
+      case "pdf-to-word":
+        return "/pdf/pdf-to-word";
+
+      case "jpg-to-pdf":
+        return "/pdf/jpg-to-pdf";
+
+      case "pdf-to-jpg":
+        return "/pdf/pdf-to-jpg";
+
+      case "merge-pdf":
+        return "/pdf/merge-pdf";
+
+      case "split-pdf":
+        return "/pdf/split-pdf";
+
+      case "compress-pdf":
+        return "/pdf/compress-pdf";
+
+      case "protect-pdf":
+        return "/pdf/protect-pdf";
+
+      case "unlock-pdf":
+        return "/pdf/unlock-pdf";
+
+      default:
+        return "/pdf/pdf-to-word";
+    }
+  };
+
+  const handleUpload = async () => {
+    if (!file) {
+      alert("Please select file");
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await fetch(
+        `${API}${getEndpoint()}`,
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
+
+      const blob = await response.blob();
+
+      const url = window.URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "converted-file";
+      a.click();
+
+    } catch (error) {
+      alert("Tool failed");
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
     <div
       style={{
-        maxWidth: "900px",
-        margin: "0 auto",
-        background: "#fff",
+        minHeight: "100vh",
+        background: "#f4f7fb",
         padding: "40px",
-        borderRadius: "16px",
-        boxShadow: "0 4px 20px rgba(0,0,0,0.08)"
+        fontFamily: "Arial",
       }}
     >
-
-      <h1
+      <button
+        onClick={() => navigate("/")}
         style={{
-          fontSize: "36px",
-          marginBottom: "10px",
-          color: "#111"
-        }}
-      >
-        {tool.name}
-      </h1>
-
-      <p
-        style={{
-          color: "#666",
+          padding: "10px 18px",
+          border: "none",
+          borderRadius: "8px",
+          background: "#2563eb",
+          color: "white",
+          cursor: "pointer",
           marginBottom: "30px",
-          fontSize: "18px"
         }}
       >
-        {tool.description}
-      </p>
+        ← Back
+      </button>
 
       <div
-        onClick={() => fileInputRef.current.click()}
         style={{
-          border: "3px dashed #4F46E5",
-          borderRadius: "14px",
-          padding: "60px",
-          textAlign: "center",
-          cursor: "pointer",
-          background: "#EEF2FF"
+          maxWidth: "700px",
+          margin: "auto",
+          background: "white",
+          padding: "40px",
+          borderRadius: "16px",
+          boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
         }}
       >
-        <h2 style={{ color: "#4F46E5" }}>
-          Click to Upload File
-        </h2>
+        <h1
+          style={{
+            marginBottom: "10px",
+            color: "#111827",
+          }}
+        >
+          {getTitle()}
+        </h1>
 
-        <p style={{ color: "#666" }}>
-          Drag & drop files here
+        <p
+          style={{
+            color: "#6b7280",
+            marginBottom: "30px",
+          }}
+        >
+          {getDescription()}
         </p>
+
+        <input
+          type="file"
+          onChange={(e) => setFile(e.target.files[0])}
+          style={{
+            marginBottom: "20px",
+          }}
+        />
+
+        <br />
+
+        <button
+          onClick={handleUpload}
+          disabled={loading}
+          style={{
+            padding: "14px 24px",
+            border: "none",
+            borderRadius: "10px",
+            background: "#2563eb",
+            color: "white",
+            fontSize: "16px",
+            cursor: "pointer",
+          }}
+        >
+          {loading ? "Processing..." : "Upload & Convert"}
+        </button>
       </div>
-
-      <input
-        ref={fileInputRef}
-        type="file"
-        multiple={toolId === "merge-pdf"}
-        style={{ display: "none" }}
-        onChange={handleFileSelect}
-      />
-
-      {files.length > 0 && (
-        <div style={{ marginTop: "30px" }}>
-
-          <h3>Selected Files</h3>
-
-          {files.map((file, index) => (
-            <div
-              key={index}
-              style={{
-                background: "#f3f4f6",
-                padding: "12px",
-                borderRadius: "8px",
-                marginTop: "10px"
-              }}
-            >
-              {file.name}
-            </div>
-          ))}
-
-          <button
-            onClick={handleProcess}
-            disabled={processing}
-            style={{
-              marginTop: "30px",
-              background: "#4F46E5",
-              color: "#fff",
-              border: "none",
-              padding: "14px 30px",
-              borderRadius: "10px",
-              cursor: "pointer",
-              fontSize: "16px",
-              fontWeight: "bold"
-            }}
-          >
-            {processing ? "Processing..." : "Process File"}
-          </button>
-
-        </div>
-      )}
-
-      {downloadUrl && (
-        <div style={{ marginTop: "30px" }}>
-          <button
-            onClick={handleDownload}
-            style={{
-              background: "#16A34A",
-              color: "#fff",
-              border: "none",
-              padding: "14px 30px",
-              borderRadius: "10px",
-              cursor: "pointer",
-              fontSize: "16px",
-              fontWeight: "bold"
-            }}
-          >
-            Download File
-          </button>
-        </div>
-      )}
-
     </div>
-
-  </div>
-);
+  );
+}
