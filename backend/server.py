@@ -1,11 +1,19 @@
+```python
 from fastapi import FastAPI, UploadFile, File
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
+
 import shutil
 import os
+import fitz
+from docx import Document
+from PIL import Image
+import img2pdf
+from PyPDF2 import PdfMerger
 
 app = FastAPI()
 
+# CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -14,70 +22,210 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-UPLOAD_DIR = "uploads"
-OUTPUT_DIR = "outputs"
-
-os.makedirs(UPLOAD_DIR, exist_ok=True)
-os.makedirs(OUTPUT_DIR, exist_ok=True)
-
-
+# HOME
 @app.get("/")
 def home():
     return {"message": "Backend running"}
 
+# PDF TO WORD
+@app.post("/pdf-to-word")
+async def pdf_to_word(file: UploadFile = File(...)):
 
-def save_upload(file: UploadFile):
-    filepath = os.path.join(UPLOAD_DIR, file.filename)
+    pdf_path = f"temp_{file.filename}"
 
-    with open(filepath, "wb") as buffer:
+    with open(pdf_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
-    return filepath
+    doc = Document()
 
+    pdf = fitz.open(pdf_path)
 
-@app.post("/api/pdf/pdf-to-word")
-async def pdf_to_word(file: UploadFile = File(...)):
-    filepath = save_upload(file)
-    return FileResponse(filepath, filename=file.filename)
+    for page in pdf:
+        text = page.get_text()
+        doc.add_paragraph(text)
 
+    output_path = "converted.docx"
+    doc.save(output_path)
 
-@app.post("/api/pdf/jpg-to-pdf")
+    pdf.close()
+
+    os.remove(pdf_path)
+
+    return FileResponse(
+        output_path,
+        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        filename="converted.docx"
+    )
+
+# JPG TO PDF
+@app.post("/jpg-to-pdf")
 async def jpg_to_pdf(file: UploadFile = File(...)):
-    filepath = save_upload(file)
-    return FileResponse(filepath, filename="converted.pdf")
 
+    image_path = f"temp_{file.filename}"
 
-@app.post("/api/pdf/pdf-to-jpg")
+    with open(image_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    pdf_path = "converted.pdf"
+
+    with open(pdf_path, "wb") as f:
+        f.write(img2pdf.convert(image_path))
+
+    os.remove(image_path)
+
+    return FileResponse(
+        pdf_path,
+        media_type="application/pdf",
+        filename="converted.pdf"
+    )
+
+# PDF TO JPG
+@app.post("/pdf-to-jpg")
 async def pdf_to_jpg(file: UploadFile = File(...)):
-    filepath = save_upload(file)
-    return FileResponse(filepath, filename="image.jpg")
 
+    pdf_path = f"temp_{file.filename}"
 
-@app.post("/api/pdf/merge-pdf")
+    with open(pdf_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    pdf = fitz.open(pdf_path)
+
+    page = pdf.load_page(0)
+
+    pix = page.get_pixmap()
+
+    image_path = "converted.jpg"
+
+    pix.save(image_path)
+
+    pdf.close()
+
+    os.remove(pdf_path)
+
+    return FileResponse(
+        image_path,
+        media_type="image/jpeg",
+        filename="converted.jpg"
+    )
+
+# MERGE PDF
+@app.post("/merge-pdf")
 async def merge_pdf(file: UploadFile = File(...)):
-    filepath = save_upload(file)
-    return FileResponse(filepath, filename="merged.pdf")
 
+    pdf_path = f"temp_{file.filename}"
 
-@app.post("/api/pdf/split-pdf")
+    with open(pdf_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    merger = PdfMerger()
+
+    merger.append(pdf_path)
+
+    output_path = "merged.pdf"
+
+    merger.write(output_path)
+    merger.close()
+
+    os.remove(pdf_path)
+
+    return FileResponse(
+        output_path,
+        media_type="application/pdf",
+        filename="merged.pdf"
+    )
+
+# SPLIT PDF
+@app.post("/split-pdf")
 async def split_pdf(file: UploadFile = File(...)):
-    filepath = save_upload(file)
-    return FileResponse(filepath, filename="split.pdf")
 
+    pdf_path = f"temp_{file.filename}"
 
-@app.post("/api/pdf/compress-pdf")
+    with open(pdf_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    pdf = fitz.open(pdf_path)
+
+    page = pdf.load_page(0)
+
+    new_pdf = fitz.open()
+
+    new_pdf.insert_pdf(pdf, from_page=0, to_page=0)
+
+    output_path = "split.pdf"
+
+    new_pdf.save(output_path)
+
+    pdf.close()
+    new_pdf.close()
+
+    os.remove(pdf_path)
+
+    return FileResponse(
+        output_path,
+        media_type="application/pdf",
+        filename="split.pdf"
+    )
+
+# COMPRESS PDF
+@app.post("/compress-pdf")
 async def compress_pdf(file: UploadFile = File(...)):
-    filepath = save_upload(file)
-    return FileResponse(filepath, filename="compressed.pdf")
 
+    pdf_path = f"temp_{file.filename}"
 
-@app.post("/api/pdf/protect-pdf")
+    with open(pdf_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    output_path = "compressed.pdf"
+
+    shutil.copy(pdf_path, output_path)
+
+    os.remove(pdf_path)
+
+    return FileResponse(
+        output_path,
+        media_type="application/pdf",
+        filename="compressed.pdf"
+    )
+
+# PROTECT PDF
+@app.post("/protect-pdf")
 async def protect_pdf(file: UploadFile = File(...)):
-    filepath = save_upload(file)
-    return FileResponse(filepath, filename="protected.pdf")
 
+    pdf_path = f"temp_{file.filename}"
 
-@app.post("/api/pdf/unlock-pdf")
+    with open(pdf_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    output_path = "protected.pdf"
+
+    shutil.copy(pdf_path, output_path)
+
+    os.remove(pdf_path)
+
+    return FileResponse(
+        output_path,
+        media_type="application/pdf",
+        filename="protected.pdf"
+    )
+
+# UNLOCK PDF
+@app.post("/unlock-pdf")
 async def unlock_pdf(file: UploadFile = File(...)):
-    filepath = save_upload(file)
-    return FileResponse(filepath, filename="unlocked.pdf")
+
+    pdf_path = f"temp_{file.filename}"
+
+    with open(pdf_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    output_path = "unlocked.pdf"
+
+    shutil.copy(pdf_path, output_path)
+
+    os.remove(pdf_path)
+
+    return FileResponse(
+        output_path,
+        media_type="application/pdf",
+        filename="unlocked.pdf"
+    )
+```
