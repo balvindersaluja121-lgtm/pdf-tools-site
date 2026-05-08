@@ -1,19 +1,14 @@
 import React, { useState } from "react";
-import { useLocation } from "react-router-dom";
-
-const API = "https://pdf-tools-site-8js9.onrender.com";
+import { useParams, useNavigate } from "react-router-dom";
 
 export default function ToolPage() {
-
-  const location = useLocation();
-
-  const toolSlug = location.pathname.replace("/", "");
+  const { toolId } = useParams();
+  const navigate = useNavigate();
 
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async () => {
-
+  const handleUpload = async () => {
     if (!file) {
       alert("Please select file");
       return;
@@ -22,23 +17,14 @@ export default function ToolPage() {
     setLoading(true);
 
     try {
-
       const formData = new FormData();
+      formData.append("file", file);
 
-      if (
-        toolSlug === "merge-pdf"
-      ) {
-        for (let i = 0; i < file.length; i++) {
-          formData.append("files", file[i]);
-        }
-      } else {
-        formData.append("file", file);
-      }
+      const API = "https://pdf-tools-site-8js9.onrender.com";
 
       let endpoint = "";
 
-      switch (toolSlug) {
-
+      switch (toolId) {
         case "pdf-to-word":
           endpoint = "/api/pdf/pdf-to-word";
           break;
@@ -81,7 +67,7 @@ export default function ToolPage() {
       });
 
       if (!response.ok) {
-        throw new Error("Backend route may not exist");
+        throw new Error("Backend route failed");
       }
 
       const blob = await response.blob();
@@ -89,104 +75,101 @@ export default function ToolPage() {
       const url = window.URL.createObjectURL(blob);
 
       const a = document.createElement("a");
-
       a.href = url;
-
-      if (toolSlug === "pdf-to-word") {
-        a.download = "converted.docx";
-      }
-      else if (toolSlug === "jpg-to-pdf") {
-        a.download = "converted.pdf";
-      }
-      else if (toolSlug === "pdf-to-jpg") {
-        a.download = "converted.zip";
-      }
-      else if (toolSlug === "merge-pdf") {
-        a.download = "merged.pdf";
-      }
-      else if (toolSlug === "split-pdf") {
-        a.download = "split.pdf";
-      }
-      else if (toolSlug === "compress-pdf") {
-        a.download = "compressed.pdf";
-      }
-      else if (toolSlug === "protect-pdf") {
-        a.download = "protected.pdf";
-      }
-      else if (toolSlug === "unlock-pdf") {
-        a.download = "unlocked.pdf";
-      }
-
+      a.download = "converted-file";
       document.body.appendChild(a);
-
       a.click();
-
       a.remove();
 
+      alert("File processed successfully");
     } catch (error) {
-
       console.error(error);
-
       alert("Tool failed. Backend route may not exist.");
-
-    } finally {
-
-      setLoading(false);
-
     }
+
+    setLoading(false);
   };
 
   return (
     <div
       style={{
         minHeight: "100vh",
-        background: "#fff7ed",
+        background: "#f5f5f5",
         padding: "40px",
-        textAlign: "center",
       }}
     >
-
-      <h1
-        style={{
-          color: "#ea580c",
-          fontSize: "40px",
-          marginBottom: "20px",
-        }}
-      >
-        {toolSlug.replace(/-/g, " ").toUpperCase()}
-      </h1>
-
-      <input
-        type="file"
-        multiple={toolSlug === "merge-pdf"}
-        onChange={(e) =>
-          toolSlug === "merge-pdf"
-            ? setFile(e.target.files)
-            : setFile(e.target.files[0])
-        }
-        style={{
-          marginBottom: "20px",
-        }}
-      />
-
-      <br />
-
       <button
-        onClick={handleSubmit}
-        disabled={loading}
+        onClick={() => navigate("/")}
         style={{
-          background: "#ea580c",
+          background: "#ff6b00",
           color: "white",
           border: "none",
-          padding: "14px 28px",
+          padding: "12px 24px",
           borderRadius: "8px",
           cursor: "pointer",
-          fontSize: "18px",
+          fontSize: "16px",
+          marginBottom: "30px",
         }}
       >
-        {loading ? "Processing..." : "Convert Now"}
+        ← Back
       </button>
 
+      <div
+        style={{
+          maxWidth: "700px",
+          margin: "0 auto",
+          background: "white",
+          padding: "40px",
+          borderRadius: "16px",
+          boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
+        }}
+      >
+        <h1
+          style={{
+            fontSize: "32px",
+            marginBottom: "10px",
+            color: "#222",
+          }}
+        >
+          {toolId.replace(/-/g, " ").toUpperCase()}
+        </h1>
+
+        <p
+          style={{
+            color: "#666",
+            marginBottom: "30px",
+          }}
+        >
+          Easy PDF tool for converting and editing files
+        </p>
+
+        <input
+          type="file"
+          onChange={(e) => setFile(e.target.files[0])}
+          style={{
+            marginBottom: "20px",
+            fontSize: "16px",
+          }}
+        />
+
+        <br />
+
+        <button
+          onClick={handleUpload}
+          disabled={loading}
+          style={{
+            background: "#ff6b00",
+            color: "white",
+            border: "none",
+            padding: "14px 30px",
+            borderRadius: "8px",
+            cursor: "pointer",
+            fontSize: "18px",
+          }}
+        >
+          {loading ? "Processing..." : "Process File"}
+        </button>
+      </div>
     </div>
   );
 }
