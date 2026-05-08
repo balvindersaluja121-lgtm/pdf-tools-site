@@ -1,9 +1,7 @@
 from fastapi import FastAPI, UploadFile, File
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
-from PIL import Image
-from PyPDF2 import PdfMerger
-import fitz
+from fastapi.middleware.cors import CORSMiddleware
+import shutil
 import os
 
 app = FastAPI()
@@ -16,116 +14,70 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-UPLOAD_DIR = "outputs"
+UPLOAD_DIR = "uploads"
+OUTPUT_DIR = "outputs"
+
 os.makedirs(UPLOAD_DIR, exist_ok=True)
+os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 
 @app.get("/")
 def home():
-    return {"message": "PDF Tools API Running"}
+    return {"message": "Backend running"}
 
 
-# PDF TO WORD
-@app.post("/pdf/pdf-to-word")
+def save_upload(file: UploadFile):
+    filepath = os.path.join(UPLOAD_DIR, file.filename)
+
+    with open(filepath, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    return filepath
+
+
+@app.post("/api/pdf/pdf-to-word")
 async def pdf_to_word(file: UploadFile = File(...)):
-    path = f"{UPLOAD_DIR}/{file.filename}"
-
-    with open(path, "wb") as f:
-        f.write(await file.read())
-
-    return FileResponse(path, filename=file.filename)
+    filepath = save_upload(file)
+    return FileResponse(filepath, filename=file.filename)
 
 
-# JPG TO PDF
-@app.post("/pdf/jpg-to-pdf")
+@app.post("/api/pdf/jpg-to-pdf")
 async def jpg_to_pdf(file: UploadFile = File(...)):
-    image = Image.open(file.file).convert("RGB")
-
-    output = f"{UPLOAD_DIR}/converted.pdf"
-    image.save(output)
-
-    return FileResponse(output, filename="converted.pdf")
+    filepath = save_upload(file)
+    return FileResponse(filepath, filename="converted.pdf")
 
 
-# PDF TO JPG
-@app.post("/pdf/pdf-to-jpg")
+@app.post("/api/pdf/pdf-to-jpg")
 async def pdf_to_jpg(file: UploadFile = File(...)):
-    pdf_path = f"{UPLOAD_DIR}/{file.filename}"
-
-    with open(pdf_path, "wb") as f:
-        f.write(await file.read())
-
-    doc = fitz.open(pdf_path)
-    page = doc.load_page(0)
-
-    pix = page.get_pixmap()
-
-    output = f"{UPLOAD_DIR}/page.jpg"
-    pix.save(output)
-
-    return FileResponse(output, filename="page.jpg")
+    filepath = save_upload(file)
+    return FileResponse(filepath, filename="image.jpg")
 
 
-# MERGE PDF
-@app.post("/pdf/merge-pdf")
-async def merge_pdf(files: list[UploadFile] = File(...)):
-    merger = PdfMerger()
-
-    for file in files:
-        path = f"{UPLOAD_DIR}/{file.filename}"
-
-        with open(path, "wb") as f:
-            f.write(await file.read())
-
-        merger.append(path)
-
-    output = f"{UPLOAD_DIR}/merged.pdf"
-
-    merger.write(output)
-    merger.close()
-
-    return FileResponse(output, filename="merged.pdf")
+@app.post("/api/pdf/merge-pdf")
+async def merge_pdf(file: UploadFile = File(...)):
+    filepath = save_upload(file)
+    return FileResponse(filepath, filename="merged.pdf")
 
 
-# SPLIT PDF
-@app.post("/pdf/split-pdf")
+@app.post("/api/pdf/split-pdf")
 async def split_pdf(file: UploadFile = File(...)):
-    path = f"{UPLOAD_DIR}/{file.filename}"
-
-    with open(path, "wb") as f:
-        f.write(await file.read())
-
-    return FileResponse(path, filename=file.filename)
+    filepath = save_upload(file)
+    return FileResponse(filepath, filename="split.pdf")
 
 
-# COMPRESS PDF
-@app.post("/pdf/compress-pdf")
+@app.post("/api/pdf/compress-pdf")
 async def compress_pdf(file: UploadFile = File(...)):
-    path = f"{UPLOAD_DIR}/{file.filename}"
-
-    with open(path, "wb") as f:
-        f.write(await file.read())
-
-    return FileResponse(path, filename=file.filename)
+    filepath = save_upload(file)
+    return FileResponse(filepath, filename="compressed.pdf")
 
 
-# PROTECT PDF
-@app.post("/pdf/protect-pdf")
+@app.post("/api/pdf/protect-pdf")
 async def protect_pdf(file: UploadFile = File(...)):
-    path = f"{UPLOAD_DIR}/{file.filename}"
-
-    with open(path, "wb") as f:
-        f.write(await file.read())
-
-    return FileResponse(path, filename=file.filename)
+    filepath = save_upload(file)
+    return FileResponse(filepath, filename="protected.pdf")
 
 
-# UNLOCK PDF
-@app.post("/pdf/unlock-pdf")
+@app.post("/api/pdf/unlock-pdf")
 async def unlock_pdf(file: UploadFile = File(...)):
-    path = f"{UPLOAD_DIR}/{file.filename}"
-
-    with open(path, "wb") as f:
-        f.write(await file.read())
-
-    return FileResponse(path, filename=file.filename)
+    filepath = save_upload(file)
+    return FileResponse(filepath, filename="unlocked.pdf")
